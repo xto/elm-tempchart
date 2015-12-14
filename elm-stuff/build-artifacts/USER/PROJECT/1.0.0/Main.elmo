@@ -1,0 +1,124 @@
+Elm.Main = Elm.Main || {};
+Elm.Main.make = function (_elm) {
+   "use strict";
+   _elm.Main = _elm.Main || {};
+   if (_elm.Main.values)
+   return _elm.Main.values;
+   var _op = {},
+   _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   $moduleName = "Main",
+   $Basics = Elm.Basics.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $Http = Elm.Http.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $String = Elm.String.make(_elm),
+   $Task = Elm.Task.make(_elm);
+   var jd = function () {
+      var tempobj = A2($Json$Decode.object1,
+      function (temperature) {
+         return A2($Basics._op["++"],
+         temperature,
+         "C");
+      },
+      A2($Json$Decode._op[":="],
+      "temperature",
+      $Json$Decode.string));
+      return A2($Json$Decode._op[":="],
+      "temperatures",
+      $Json$Decode.list(tempobj));
+   }();
+   var getTemp = function (query) {
+      return function () {
+         var testUrl = !_U.eq($String.length(query),
+         0) ? $Task.succeed(A2($Basics._op["++"],
+         "http://localhost:3000/",
+         query)) : $Task.fail("Matt Damon needs 1+ char");
+         return A2($Task.andThen,
+         testUrl,
+         function ($) {
+            return $Task.mapError($Basics.always("BOOM"))($Http.get(jd)($));
+         });
+      }();
+   };
+   var results = $Signal.mailbox($Result.Err("Potato"));
+   var query = $Signal.mailbox("");
+   var updateContent = Elm.Native.Task.make(_elm).performSignal("updateContent",
+   $Signal.map(function (task) {
+      return A2($Task.andThen,
+      $Task.toResult(task),
+      $Signal.send(results.address));
+   })(A2($Signal.map,
+   getTemp,
+   query.signal)));
+   var myStyle = $Html$Attributes.style(_L.fromArray([{ctor: "_Tuple2"
+                                                      ,_0: "width"
+                                                      ,_1: "100%"}
+                                                     ,{ctor: "_Tuple2"
+                                                      ,_0: "height"
+                                                      ,_1: "40px"}
+                                                     ,{ctor: "_Tuple2"
+                                                      ,_0: "padding"
+                                                      ,_1: "10px 0"}
+                                                     ,{ctor: "_Tuple2"
+                                                      ,_0: "font-size"
+                                                      ,_1: "2em"}
+                                                     ,{ctor: "_Tuple2"
+                                                      ,_0: "text-align"
+                                                      ,_1: "center"}]));
+   var view = F2(function (string,
+   result) {
+      return function () {
+         var tempSpan = function () {
+            switch (result.ctor)
+            {case "Err":
+               return _L.fromArray([A2($Html.div,
+                 _L.fromArray([myStyle]),
+                 _L.fromArray([$Html.text(result._0)]))]);
+               case "Ok": return A2($List.map,
+                 function (temp) {
+                    return A2($Html.span,
+                    _L.fromArray([myStyle]),
+                    _L.fromArray([$Html.text(temp)]));
+                 },
+                 result._0);}
+            _U.badCase($moduleName,
+            "between lines 23 and 28");
+         }();
+         var queryInput = A2($Html.input,
+         _L.fromArray([$Html$Attributes.placeholder("enter whatever")
+                      ,$Html$Attributes.value(string)
+                      ,A3($Html$Events.on,
+                      "input",
+                      $Html$Events.targetValue,
+                      $Signal.message(query.address))
+                      ,myStyle]),
+         _L.fromArray([]));
+         return A2($Html.div,
+         _L.fromArray([]),
+         A2($List._op["::"],
+         queryInput,
+         tempSpan));
+      }();
+   });
+   var main = A3($Signal.map2,
+   view,
+   query.signal,
+   results.signal);
+   _elm.Main.values = {_op: _op
+                      ,view: view
+                      ,myStyle: myStyle
+                      ,main: main
+                      ,query: query
+                      ,results: results
+                      ,getTemp: getTemp
+                      ,jd: jd};
+   return _elm.Main.values;
+};
