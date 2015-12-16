@@ -10,6 +10,7 @@ Elm.Main.make = function (_elm) {
    _L = _N.List.make(_elm),
    $moduleName = "Main",
    $Basics = Elm.Basics.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $Html$Events = Elm.Html.Events.make(_elm),
@@ -19,7 +20,7 @@ Elm.Main.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
-   $StartApp$Simple = Elm.StartApp.Simple.make(_elm),
+   $StartApp = Elm.StartApp.make(_elm),
    $Task = Elm.Task.make(_elm);
    var results = $Signal.mailbox($Result.Err("Potato"));
    var query = $Signal.mailbox("");
@@ -43,17 +44,25 @@ Elm.Main.make = function (_elm) {
       return function () {
          switch (action.ctor)
          {case "LoadReadings":
-            return _U.replace([["temperatureReadings"
-                               ,A2($List.append,
-                               model.temperatureReadings,
-                               _L.fromArray([{_: {}
-                                             ,readAt: "NOW"
-                                             ,temperature: "102"
-                                             ,unit: "Kelvin"}]))]],
-              model);
-            case "NoOp": return model;}
+            return function () {
+                 var potato = _U.replace([["temperatureReadings"
+                                          ,A2($List.append,
+                                          model.temperatureReadings,
+                                          _L.fromArray([{_: {}
+                                                        ,readAt: "NOW"
+                                                        ,temperature: "102"
+                                                        ,unit: "Kelvin"}]))]],
+                 model);
+                 return {ctor: "_Tuple2"
+                        ,_0: potato
+                        ,_1: $Effects.none};
+              }();
+            case "NoOp":
+            return {ctor: "_Tuple2"
+                   ,_0: model
+                   ,_1: $Effects.none};}
          _U.badCase($moduleName,
-         "between lines 31 and 38");
+         "between lines 30 and 47");
       }();
    });
    var LoadReadings = {ctor: "LoadReadings"};
@@ -69,19 +78,22 @@ Elm.Main.make = function (_elm) {
                    ,$Html.text($Basics.toString(model.temperatureReadings))]));
    });
    var NoOp = {ctor: "NoOp"};
-   var initialModel = {_: {}
-                      ,temperatureReadings: _L.fromArray([{_: {}
-                                                          ,readAt: "NOW"
-                                                          ,temperature: "102"
-                                                          ,unit: "Kelvin"}])};
-   var main = $StartApp$Simple.start({_: {}
-                                     ,model: initialModel
-                                     ,update: update
-                                     ,view: view});
    var Model = function (a) {
       return {_: {}
              ,temperatureReadings: a};
    };
+   var init = {ctor: "_Tuple2"
+              ,_0: Model(_L.fromArray([{_: {}
+                                       ,readAt: "NOW"
+                                       ,temperature: "102"
+                                       ,unit: "Kelvin"}]))
+              ,_1: $Effects.none};
+   var app = $StartApp.start({_: {}
+                             ,init: init
+                             ,inputs: _L.fromArray([])
+                             ,update: update
+                             ,view: view});
+   var main = app.html;
    var TemperatureReading = F3(function (a,
    b,
    c) {
@@ -125,12 +137,13 @@ Elm.Main.make = function (_elm) {
    _elm.Main.values = {_op: _op
                       ,TemperatureReading: TemperatureReading
                       ,Model: Model
-                      ,initialModel: initialModel
+                      ,init: init
                       ,NoOp: NoOp
                       ,LoadReadings: LoadReadings
                       ,update: update
                       ,view: view
                       ,myStyle: myStyle
+                      ,app: app
                       ,main: main
                       ,query: query
                       ,results: results

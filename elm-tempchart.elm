@@ -4,7 +4,8 @@ import Task exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import StartApp.Simple as StartApp
+import StartApp
+import Effects exposing (Effects)
 
 -- Model
 
@@ -14,28 +15,36 @@ type alias TemperatureReading =
 type alias Model = {
   temperatureReadings: List TemperatureReading
 }
-
-initialModel : Model
-initialModel =
-  { temperatureReadings = [
-    {temperature = "102", readAt = "NOW", unit = "Kelvin"}
-  ] }
+init : (Model, Effects Action)
+init =
+  (Model [{temperature = "102", readAt = "NOW", unit = "Kelvin"}]
+  , Effects.none)
 
 --- Update
 type Action
   = NoOp
   | LoadReadings
 
-update: Action -> Model -> Model
+update: Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     NoOp ->
-      model
+      (model
+      , Effects.none)
     LoadReadings ->
+      let
+        potato =
+          {model | temperatureReadings <- List.append model.temperatureReadings [{temperature = "102", readAt = "NOW", unit = "Kelvin"}]}
+      in
+        (potato
+        , Effects.none)
       -- let
       --   newReadings =
-
-      {model | temperatureReadings <- List.append model.temperatureReadings [{temperature = "102", readAt = "NOW", unit = "Kelvin"}]}
+      --     getTemp
+      --     |> Task.toMaybe
+      --     |> Effects.task
+      -- in
+        -- ({model | temperatureReadings <- List.append model.temperatureReadings newReadings}, Effects.none)
 
 
 -- View
@@ -74,11 +83,20 @@ myStyle =
       , ("text-align", "center")
       ]
 
+
 --Wiring
+app :{html : Signal Html, model : Signal Model, tasks : Signal (Task Effects.Never())}
+app =
+  StartApp.start
+    {init = init
+    ,update = update
+    ,view = view
+    ,inputs = []
+    }
+
 main: Signal Html
 main =
-  StartApp.start {model = initialModel, view = view, update = update}
-
+  app.html
 
 query : Signal.Mailbox String
 query =
