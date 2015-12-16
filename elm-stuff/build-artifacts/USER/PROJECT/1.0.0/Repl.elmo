@@ -10,21 +10,24 @@ Elm.Repl.make = function (_elm) {
    _L = _N.List.make(_elm),
    $moduleName = "Repl",
    $Basics = Elm.Basics.make(_elm),
-   $Json$Decode = Elm.Json.Decode.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var tsol = {ctor: "_Tuple0"};
-   var test = $Json$Decode.object1(function (temp) {
-      return A2($Basics._op["++"],
-      temp,
-      "C");
+   var a = {_: {}
+           ,chip: 123
+           ,potato: "SADASD"};
+   var deltron3030 = $Basics.toString(a);
+   var XYZ = F2(function (a,b) {
+      return {_: {}
+             ,chip: b
+             ,potato: a};
    });
-   var deltron3030 = test;
    _elm.Repl.values = {_op: _op
+                      ,XYZ: XYZ
+                      ,a: a
                       ,deltron3030: deltron3030
-                      ,test: test
                       ,tsol: tsol};
    return _elm.Repl.values;
 };
