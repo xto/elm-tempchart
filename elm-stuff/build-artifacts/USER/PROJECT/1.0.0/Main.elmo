@@ -22,8 +22,6 @@ Elm.Main.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $StartApp = Elm.StartApp.make(_elm),
    $Task = Elm.Task.make(_elm);
-   var results = $Signal.mailbox($Result.Err("Potato"));
-   var query = $Signal.mailbox("");
    var myStyle = $Html$Attributes.style(_L.fromArray([{ctor: "_Tuple2"
                                                       ,_0: "width"
                                                       ,_1: "100%"}
@@ -39,32 +37,7 @@ Elm.Main.make = function (_elm) {
                                                      ,{ctor: "_Tuple2"
                                                       ,_0: "text-align"
                                                       ,_1: "center"}]));
-   var update = F2(function (action,
-   model) {
-      return function () {
-         switch (action.ctor)
-         {case "LoadReadings":
-            return function () {
-                 var potato = _U.replace([["temperatureReadings"
-                                          ,A2($List.append,
-                                          model.temperatureReadings,
-                                          _L.fromArray([{_: {}
-                                                        ,readAt: "NOW"
-                                                        ,temperature: "102"
-                                                        ,unit: "Kelvin"}]))]],
-                 model);
-                 return {ctor: "_Tuple2"
-                        ,_0: potato
-                        ,_1: $Effects.none};
-              }();
-            case "NoOp":
-            return {ctor: "_Tuple2"
-                   ,_0: model
-                   ,_1: $Effects.none};}
-         _U.badCase($moduleName,
-         "between lines 30 and 47");
-      }();
-   });
+   var FakeLoadReadings = {ctor: "FakeLoadReadings"};
    var LoadReadings = {ctor: "LoadReadings"};
    var view = F2(function (address,
    model) {
@@ -75,13 +48,31 @@ Elm.Main.make = function (_elm) {
                    address,
                    LoadReadings)]),
                    _L.fromArray([$Html.text("POTATO")]))
-                   ,$Html.text($Basics.toString(model.temperatureReadings))]));
+                   ,A2($Html.div,
+                   _L.fromArray([]),
+                   _L.fromArray([$Html.text($Basics.toString(model.temperatureReadings))]))]));
    });
    var NoOp = {ctor: "NoOp"};
    var Model = function (a) {
       return {_: {}
              ,temperatureReadings: a};
    };
+   var update = F2(function (action,
+   model) {
+      return function () {
+         switch (action.ctor)
+         {case "LoadReadings":
+            return {ctor: "_Tuple2"
+                   ,_0: Model(model.temperatureReadings)
+                   ,_1: $Effects.none};
+            case "NoOp":
+            return {ctor: "_Tuple2"
+                   ,_0: model
+                   ,_1: $Effects.none};}
+         _U.badCase($moduleName,
+         "between lines 27 and 35");
+      }();
+   });
    var init = {ctor: "_Tuple2"
               ,_0: Model(_L.fromArray([{_: {}
                                        ,readAt: "NOW"
@@ -118,37 +109,27 @@ Elm.Main.make = function (_elm) {
       "temperatures",
       $Json$Decode.list(tempobj));
    }();
+   var getTemp = $Task.toMaybe(A2($Http.get,
+   jd,
+   "http://localhost:3000/"));
    var getUrl = function (urlString) {
       return A2($Http.get,
       jd,
       urlString);
    };
-   var httpGetWrapper = function (urlString) {
-      return A2($Task.mapError,
-      $Basics.always("BOOM"),
-      getUrl(urlString));
-   };
-   var getTemp = function () {
-      var urlTask = $Task.succeed("http://localhost:3000/");
-      return A2($Task.andThen,
-      urlTask,
-      httpGetWrapper);
-   }();
    _elm.Main.values = {_op: _op
                       ,TemperatureReading: TemperatureReading
                       ,Model: Model
-                      ,init: init
                       ,NoOp: NoOp
                       ,LoadReadings: LoadReadings
+                      ,FakeLoadReadings: FakeLoadReadings
                       ,update: update
                       ,view: view
                       ,myStyle: myStyle
                       ,app: app
+                      ,init: init
                       ,main: main
-                      ,query: query
-                      ,results: results
                       ,getTemp: getTemp
-                      ,httpGetWrapper: httpGetWrapper
                       ,getUrl: getUrl
                       ,jd: jd};
    return _elm.Main.values;

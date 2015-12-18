@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import StartApp
-import Effects exposing (Effects)
+import Effects exposing (Effects, Never)
 
 -- Model
 
@@ -15,10 +15,6 @@ type alias TemperatureReading =
 type alias Model = {
   temperatureReadings: List TemperatureReading
 }
-init : (Model, Effects Action)
-init =
-  (Model [{temperature = "102", readAt = "NOW", unit = "Kelvin"}]
-  , Effects.none)
 
 --- Update
 type Action
@@ -31,47 +27,17 @@ update action model =
     NoOp ->
       (model
       , Effects.none)
+
     LoadReadings ->
-      let
-        potato =
-          {model | temperatureReadings <- List.append model.temperatureReadings [{temperature = "102", readAt = "NOW", unit = "Kelvin"}]}
-      in
-        (potato
-        , Effects.none)
-      -- let
-      --   newReadings =
-      --     getTemp
-      --     |> Task.toMaybe
-      --     |> Effects.task
-      -- in
-        -- ({model | temperatureReadings <- List.append model.temperatureReadings newReadings}, Effects.none)
+      ( Model model.temperatureReadings
+      ,  Effects.none
+      )
 
-
--- View
--- view : String -> Result String (List String) -> Html
--- view string result =
---   let queryInput =
---         input
---           [placeholder "enter whatever"
---           , value string
---           , on "input" targetValue (Signal.message query.address)
---           , myStyle
---           ]
---           []
---       tempSpan =
---         case result of
---           Err msg ->
---             [ div [myStyle] [text msg]]
---           Ok temps ->
---             List.map (\temp -> span [myStyle][text temp]) temps
---   in
---     div[] (queryInput :: tempSpan)
---
 view: Signal.Address Action -> Model ->Html
 view address model =
   div [][
   button [onClick address LoadReadings][text "POTATO"]
-  ,text (toString model.temperatureReadings)]
+  ,div [] [(text (toString model.temperatureReadings))]]
 
 myStyle : Attribute
 myStyle =
@@ -93,34 +59,21 @@ app =
     ,view = view
     ,inputs = []
     }
+init : (Model, Effects Action)
+init =
+  (Model [{temperature = "102", readAt = "NOW", unit = "Kelvin"}]
+  , Effects.none)
 
 main: Signal Html
 main =
   app.html
 
-query : Signal.Mailbox String
-query =
-  Signal.mailbox ""
-
-results: Signal.Mailbox (Result String (List String))
-results =
-  Signal.mailbox (Err "Potato")
-
--- port updateContent : Signal (Task String (List TemperatureReading))
--- port updateContent =
-  -- Signal.map getTemp query.signal
-  --Signal.map (\task -> Task.toResult task `andThen` Signal.send results.address)
-
-getTemp : Task String (List TemperatureReading)
+getTemp : Effects Action
 getTemp =
-  let urlTask =
-        succeed ("http://localhost:3000/")
-  in
-    urlTask `andThen` httpGetWrapper
-
-httpGetWrapper : String -> Task String (List TemperatureReading)
-httpGetWrapper urlString =
-      (mapError (always "BOOM") (getUrl urlString))
+  Http.get jd "http://localhost:3000/"
+    |> Task.toMaybe
+    |> Task.map LoadReadings
+    |> Effects.task
 
 getUrl : String -> Task Http.Error (List TemperatureReading)
 getUrl urlString =
@@ -137,3 +90,32 @@ jd =
         ("unit" := Json.string)
   in
     "temperatures" := Json.list tempobj
+
+
+-- query : Signal.Mailbox String
+-- query =
+--   Signal.mailbox ""
+--
+-- results: Signal.Mailbox (Result String (List String))
+-- results =
+--   Signal.mailbox (Err "Potato")
+
+-- port updateContent : Signal (Task String (List TemperatureReading))
+-- port updateContent =
+  -- Signal.map getTemp query.signal
+  --Signal.map (\task -> Task.toResult task `andThen` Signal.send results.address)
+
+-- getTemp : Task String (List TemperatureReading)
+-- getTemp =
+--   let urlTask =
+--         succeed ("http://localhost:3000/")
+--   in
+--     urlTask `andThen` httpGetWrapper
+
+-- getTemp : Effects (Maybe (List TemperatureReading))
+
+
+--
+-- httpGetWrapper : String -> Task String (List TemperatureReading)
+-- httpGetWrapper urlString =
+--       (mapError (always "BOOM") getUrl urlString)
