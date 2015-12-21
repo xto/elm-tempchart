@@ -20,7 +20,6 @@ Elm.Main.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
-   $StartApp = Elm.StartApp.make(_elm),
    $Task = Elm.Task.make(_elm);
    var myStyle = $Html$Attributes.style(_L.fromArray([{ctor: "_Tuple2"
                                                       ,_0: "width"
@@ -37,21 +36,10 @@ Elm.Main.make = function (_elm) {
                                                      ,{ctor: "_Tuple2"
                                                       ,_0: "text-align"
                                                       ,_1: "center"}]));
-   var FakeLoadReadings = {ctor: "FakeLoadReadings"};
-   var LoadReadings = {ctor: "LoadReadings"};
-   var view = F2(function (address,
-   model) {
-      return A2($Html.div,
-      _L.fromArray([]),
-      _L.fromArray([A2($Html.button,
-                   _L.fromArray([A2($Html$Events.onClick,
-                   address,
-                   LoadReadings)]),
-                   _L.fromArray([$Html.text("POTATO")]))
-                   ,A2($Html.div,
-                   _L.fromArray([]),
-                   _L.fromArray([$Html.text($Basics.toString(model.temperatureReadings))]))]));
-   });
+   var LoadReadings = function (a) {
+      return {ctor: "LoadReadings"
+             ,_0: a};
+   };
    var NoOp = {ctor: "NoOp"};
    var Model = function (a) {
       return {_: {}
@@ -63,28 +51,19 @@ Elm.Main.make = function (_elm) {
          switch (action.ctor)
          {case "LoadReadings":
             return {ctor: "_Tuple2"
-                   ,_0: Model(model.temperatureReadings)
+                   ,_0: Model(_L.fromArray([{_: {}
+                                            ,readAt: "NOW"
+                                            ,temperature: "102"
+                                            ,unit: "Kelvin"}]))
                    ,_1: $Effects.none};
             case "NoOp":
             return {ctor: "_Tuple2"
                    ,_0: model
                    ,_1: $Effects.none};}
          _U.badCase($moduleName,
-         "between lines 27 and 35");
+         "between lines 26 and 34");
       }();
    });
-   var init = {ctor: "_Tuple2"
-              ,_0: Model(_L.fromArray([{_: {}
-                                       ,readAt: "NOW"
-                                       ,temperature: "102"
-                                       ,unit: "Kelvin"}]))
-              ,_1: $Effects.none};
-   var app = $StartApp.start({_: {}
-                             ,init: init
-                             ,inputs: _L.fromArray([])
-                             ,update: update
-                             ,view: view});
-   var main = app.html;
    var TemperatureReading = F3(function (a,
    b,
    c) {
@@ -109,9 +88,28 @@ Elm.Main.make = function (_elm) {
       "temperatures",
       $Json$Decode.list(tempobj));
    }();
-   var getTemp = $Task.toMaybe(A2($Http.get,
+   var getTemp = $Effects.task($Task.map(LoadReadings)($Task.toMaybe(A2($Http.get,
    jd,
-   "http://localhost:3000/"));
+   "http://localhost:3000/"))));
+   var view = F2(function (address,
+   model) {
+      return A2($Html.div,
+      _L.fromArray([]),
+      _L.fromArray([A2($Html.button,
+                   _L.fromArray([A2($Html$Events.onClick,
+                   address,
+                   getTemp)]),
+                   _L.fromArray([$Html.text("POTATO")]))
+                   ,A2($Html.div,
+                   _L.fromArray([]),
+                   _L.fromArray([$Html.text($Basics.toString(model.temperatureReadings))]))]));
+   });
+   var init = {ctor: "_Tuple2"
+              ,_0: Model(_L.fromArray([{_: {}
+                                       ,readAt: "NOW"
+                                       ,temperature: "102"
+                                       ,unit: "Kelvin"}]))
+              ,_1: getTemp};
    var getUrl = function (urlString) {
       return A2($Http.get,
       jd,
@@ -122,13 +120,10 @@ Elm.Main.make = function (_elm) {
                       ,Model: Model
                       ,NoOp: NoOp
                       ,LoadReadings: LoadReadings
-                      ,FakeLoadReadings: FakeLoadReadings
                       ,update: update
                       ,view: view
                       ,myStyle: myStyle
-                      ,app: app
                       ,init: init
-                      ,main: main
                       ,getTemp: getTemp
                       ,getUrl: getUrl
                       ,jd: jd};

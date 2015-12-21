@@ -15,18 +15,10 @@ Elm.Repl.make = function (_elm) {
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var tsol = {ctor: "_Tuple0"};
-   var a = {_: {}
-           ,chip: 123
-           ,potato: "SADASD"};
-   var deltron3030 = $Basics.toString(a);
-   var XYZ = F2(function (a,b) {
-      return {_: {}
-             ,chip: b
-             ,potato: a};
-   });
+   var deltron3030 = A2($List.append,
+   _L.fromArray([1]),
+   _L.fromArray([]));
    _elm.Repl.values = {_op: _op
-                      ,XYZ: XYZ
-                      ,a: a
                       ,deltron3030: deltron3030
                       ,tsol: tsol};
    return _elm.Repl.values;

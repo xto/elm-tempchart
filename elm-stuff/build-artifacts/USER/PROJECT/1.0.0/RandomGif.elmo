@@ -1,0 +1,141 @@
+Elm.RandomGif = Elm.RandomGif || {};
+Elm.RandomGif.make = function (_elm) {
+   "use strict";
+   _elm.RandomGif = _elm.RandomGif || {};
+   if (_elm.RandomGif.values)
+   return _elm.RandomGif.values;
+   var _op = {},
+   _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   $moduleName = "RandomGif",
+   $Basics = Elm.Basics.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $Http = Elm.Http.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Task = Elm.Task.make(_elm);
+   var decodeUrl = A2($Json$Decode.at,
+   _L.fromArray(["data"
+                ,"image_url"]),
+   $Json$Decode.string);
+   _op["=>"] = F2(function (v0,
+   v1) {
+      return {ctor: "_Tuple2"
+             ,_0: v0
+             ,_1: v1};
+   });
+   var headerStyle = $Html$Attributes.style(_L.fromArray([A2(_op["=>"],
+                                                         "width",
+                                                         "200px")
+                                                         ,A2(_op["=>"],
+                                                         "text-align",
+                                                         "center")]));
+   var imgStyle = function (url) {
+      return $Html$Attributes.style(_L.fromArray([A2(_op["=>"],
+                                                 "display",
+                                                 "inline-block")
+                                                 ,A2(_op["=>"],"width","200px")
+                                                 ,A2(_op["=>"],"height","200px")
+                                                 ,A2(_op["=>"],
+                                                 "background-position",
+                                                 "center center")
+                                                 ,A2(_op["=>"],
+                                                 "background-size",
+                                                 "cover")
+                                                 ,A2(_op["=>"],
+                                                 "background-image",
+                                                 A2($Basics._op["++"],
+                                                 "url(\'",
+                                                 A2($Basics._op["++"],
+                                                 url,
+                                                 "\')")))]));
+   };
+   var randomUrl = function (topic) {
+      return A2($Http.url,
+      "http://api.giphy.com/v1/gifs/random",
+      _L.fromArray([A2(_op["=>"],
+                   "api_key",
+                   "dc6zaTOxFJmzC")
+                   ,A2(_op["=>"],"tag",topic)]));
+   };
+   var NewGif = function (a) {
+      return {ctor: "NewGif"
+             ,_0: a};
+   };
+   var getRandomGif = function (topic) {
+      return $Effects.task($Task.map(NewGif)($Task.toMaybe(A2($Http.get,
+      decodeUrl,
+      randomUrl(topic)))));
+   };
+   var RequestMore = {ctor: "RequestMore"};
+   var view = F2(function (address,
+   model) {
+      return A2($Html.div,
+      _L.fromArray([$Html$Attributes.style(_L.fromArray([A2(_op["=>"],
+      "width",
+      "200px")]))]),
+      _L.fromArray([A2($Html.h2,
+                   _L.fromArray([headerStyle]),
+                   _L.fromArray([$Html.text(model.topic)]))
+                   ,A2($Html.div,
+                   _L.fromArray([imgStyle(model.gifUrl)]),
+                   _L.fromArray([]))
+                   ,A2($Html.button,
+                   _L.fromArray([A2($Html$Events.onClick,
+                   address,
+                   RequestMore)]),
+                   _L.fromArray([$Html.text("More Please!")]))]));
+   });
+   var Model = F2(function (a,b) {
+      return {_: {}
+             ,gifUrl: b
+             ,topic: a};
+   });
+   var init = function (topic) {
+      return {ctor: "_Tuple2"
+             ,_0: A2(Model,
+             topic,
+             "assets/waiting.gif")
+             ,_1: getRandomGif(topic)};
+   };
+   var update = F2(function (action,
+   model) {
+      return function () {
+         switch (action.ctor)
+         {case "NewGif":
+            return {ctor: "_Tuple2"
+                   ,_0: A2(Model,
+                   model.topic,
+                   A2($Maybe.withDefault,
+                   model.gifUrl,
+                   action._0))
+                   ,_1: $Effects.none};
+            case "RequestMore":
+            return {ctor: "_Tuple2"
+                   ,_0: model
+                   ,_1: getRandomGif(model.topic)};}
+         _U.badCase($moduleName,
+         "between lines 36 and 43");
+      }();
+   });
+   _elm.RandomGif.values = {_op: _op
+                           ,Model: Model
+                           ,init: init
+                           ,RequestMore: RequestMore
+                           ,NewGif: NewGif
+                           ,update: update
+                           ,view: view
+                           ,headerStyle: headerStyle
+                           ,imgStyle: imgStyle
+                           ,getRandomGif: getRandomGif
+                           ,randomUrl: randomUrl
+                           ,decodeUrl: decodeUrl};
+   return _elm.RandomGif.values;
+};
