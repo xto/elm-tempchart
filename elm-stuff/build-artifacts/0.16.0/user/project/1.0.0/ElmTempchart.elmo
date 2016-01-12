@@ -1,0 +1,90 @@
+Elm.ElmTempchart = Elm.ElmTempchart || {};
+Elm.ElmTempchart.make = function (_elm) {
+   "use strict";
+   _elm.ElmTempchart = _elm.ElmTempchart || {};
+   if (_elm.ElmTempchart.values) return _elm.ElmTempchart.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $Http = Elm.Http.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $StartApp = Elm.StartApp.make(_elm),
+   $Task = Elm.Task.make(_elm),
+   $Time = Elm.Time.make(_elm);
+   var _op = {};
+   var clock = $Time.every($Time.second);
+   var myStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "width",_1: "100%"}
+                                                ,{ctor: "_Tuple2",_0: "height",_1: "40px"}
+                                                ,{ctor: "_Tuple2",_0: "padding",_1: "10px 0"}
+                                                ,{ctor: "_Tuple2",_0: "font-size",_1: "2em"}
+                                                ,{ctor: "_Tuple2",_0: "text-align",_1: "center"}]));
+   var RequestReadingsOnTime = function (a) {    return {ctor: "RequestReadingsOnTime",_0: a};};
+   var LoadReadings = function (a) {    return {ctor: "LoadReadings",_0: a};};
+   var getTemp = function (httpGetCallFunc) {    return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(httpGetCallFunc)));};
+   var RequestReadings = {ctor: "RequestReadings"};
+   var view = F2(function (address,model) {
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.button,_U.list([A2($Html$Events.onClick,address,RequestReadings)]),_U.list([$Html.text("POTATO")]))
+              ,A2($Html.div,_U.list([]),_U.list([$Html.text($Basics.toString(model.temperatureReadings))]))]));
+   });
+   var Model = function (a) {    return {temperatureReadings: a};};
+   var TemperatureReading = F3(function (a,b,c) {    return {temperature: a,readAt: b,unit: c};});
+   var jd = function () {
+      var tempobj = A4($Json$Decode.object3,
+      TemperatureReading,
+      A2($Json$Decode._op[":="],"temperature",$Json$Decode.string),
+      A2($Json$Decode._op[":="],"readAt",$Json$Decode.string),
+      A2($Json$Decode._op[":="],"unit",$Json$Decode.string));
+      return A2($Json$Decode._op[":="],"temperatures",$Json$Decode.list(tempobj));
+   }();
+   var httpGetCall = A2($Http.get,jd,A2($Http.url,"http://localhost:3000/",_U.list([])));
+   var init = {ctor: "_Tuple2",_0: Model(_U.list([])),_1: getTemp(httpGetCall)};
+   var update = F2(function (action,model) {
+      var _p0 = action;
+      switch (_p0.ctor)
+      {case "RequestReadings": return {ctor: "_Tuple2",_0: model,_1: getTemp(httpGetCall)};
+         case "LoadReadings": var _p2 = _p0._0;
+           var eval_readings = A2($Maybe.withDefault,_U.list([]),_p2);
+           var _p1 = _p2;
+           if (_p1.ctor === "Nothing") {
+                 return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+              } else {
+                 return {ctor: "_Tuple2",_0: Model(A2($List.append,model.temperatureReadings,eval_readings)),_1: $Effects.none};
+              }
+         default: return {ctor: "_Tuple2",_0: model,_1: _p0._0};}
+   });
+   var httpGet = function (t) {
+      return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(A2($Http.get,jd,A2($Http.url,"http://localhost:3000/",_U.list([]))))));
+   };
+   var periodicGet = A2($Signal.map,RequestReadingsOnTime,A2($Signal.map,httpGet,clock));
+   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([periodicGet])});
+   var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
+   var main = app.html;
+   return _elm.ElmTempchart.values = {_op: _op
+                                     ,TemperatureReading: TemperatureReading
+                                     ,Model: Model
+                                     ,init: init
+                                     ,RequestReadings: RequestReadings
+                                     ,LoadReadings: LoadReadings
+                                     ,RequestReadingsOnTime: RequestReadingsOnTime
+                                     ,update: update
+                                     ,view: view
+                                     ,myStyle: myStyle
+                                     ,getTemp: getTemp
+                                     ,httpGetCall: httpGetCall
+                                     ,jd: jd
+                                     ,clock: clock
+                                     ,httpGet: httpGet
+                                     ,periodicGet: periodicGet
+                                     ,app: app
+                                     ,main: main};
+};

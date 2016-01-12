@@ -7,6 +7,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import StartApp
 import Effects exposing (Effects, Never)
+import Time exposing (Time, second)
 
 
 -- Model
@@ -18,10 +19,10 @@ type alias Model = {
 }
 
 
-init : String -> (Model, Effects Action)
-init some_String=
-  (Model [{temperature = some_String, readAt = some_String, unit = some_String}]
-  , getTemp)
+init : (Model, Effects Action)
+init =
+  (Model []
+  , getTemp httpGetCall)
 
 
 --- Update
@@ -29,22 +30,29 @@ init some_String=
 type Action
   = RequestReadings
   | LoadReadings (Maybe (List TemperatureReading))
+  | RequestReadingsOnTime (Effects Action)
 
 update: Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     RequestReadings ->
       (model
-      , getTemp)
+      , getTemp httpGetCall)
 
     LoadReadings newTemperatureReadings->
       let
         eval_readings =
           (Maybe.withDefault [] newTemperatureReadings)
       in
-        ( Model (List.append model.temperatureReadings eval_readings)
-          ,Effects.none
-        )
+        case newTemperatureReadings of
+          Nothing ->
+            (model, Effects.none)
+          Maybe.Just potato ->
+            ( Model (List.append model.temperatureReadings eval_readings)
+              ,Effects.none
+            )
+    RequestReadingsOnTime effect ->
+      (model, effect)
 
 
 view: Signal.Address Action -> Model ->Html
@@ -65,16 +73,16 @@ myStyle =
 
 
 --Wiring
-getTemp : Effects Action
-getTemp =
-  Http.get jd (Http.url "http://localhost:3000/" [("Potato", "Chip")])
+getTemp : Task a (List TemperatureReading)-> Effects Action
+getTemp httpGetCallFunc =
+  httpGetCallFunc
     |> Task.toMaybe
     |> Task.map LoadReadings
     |> Effects.task
 
-getUrl : String -> Task Http.Error (List TemperatureReading)
-getUrl urlString =
-  Http.get jd urlString
+httpGetCall :Task Http.Error (List TemperatureReading)
+httpGetCall  =
+  Http.get jd (Http.url "http://localhost:3000/" [])
 
 
 jd : Json.Decoder (List TemperatureReading)
@@ -87,15 +95,32 @@ jd =
         ("unit" := Json.string)
   in
     "temperatures" := Json.list tempobj
+clock: Signal Time
+clock =
+  Time.every Time.second
+
+httpGet: a -> Effects Action
+httpGet t =
+  Http.get jd (Http.url "http://localhost:3000/" [])
+    |> Task.toMaybe
+    |> Task.map LoadReadings
+    |> Effects.task
+
+
+periodicGet: Signal Action
+periodicGet =
+  Signal.map (httpGet) clock
+  |> Signal.map RequestReadingsOnTime
+
 
 -- Main
 app :{html : Signal Html, model : Signal Model, tasks : Signal (Task Effects.Never())}
 app =
   StartApp.start
-    { init = init "funny cats"
+    { init = init
     , update = update
     , view = view
-    , inputs = []
+    , inputs = [periodicGet]
     }
 
 
