@@ -1,0 +1,164 @@
+Elm.Chartjs = Elm.Chartjs || {};
+Elm.Chartjs.Line = Elm.Chartjs.Line || {};
+Elm.Chartjs.Line.make = function (_elm) {
+   "use strict";
+   _elm.Chartjs = _elm.Chartjs || {};
+   _elm.Chartjs.Line = _elm.Chartjs.Line || {};
+   if (_elm.Chartjs.Line.values) return _elm.Chartjs.Line.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Chartjs = Elm.Chartjs.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var decodeConfig = function (_p0) {
+      var _p1 = _p0;
+      var decode = function (_p2) {
+         var _p3 = _p2;
+         var _p4 = _p3._1;
+         return {label: _p3._0
+                ,fillColor: $Chartjs.showRGBA(_p4.fillColor)
+                ,strokeColor: $Chartjs.showRGBA(_p4.strokeColor)
+                ,pointColor: $Chartjs.showRGBA(_p4.pointColor)
+                ,pointStrokeColor: $Chartjs.showRGBA(_p4.pointStrokeColor)
+                ,pointHighlightFill: $Chartjs.showRGBA(_p4.pointHighlightFill)
+                ,pointHighlightStroke: $Chartjs.showRGBA(_p4.pointHighlightStroke)
+                ,data: $Chartjs.toArray(_p3._2)};
+      };
+      return {labels: $Chartjs.toArray(_p1._0),datasets: $Chartjs.toArray(A2($List.map,decode,_p1._1))};
+   };
+   var ConfigRaw = F2(function (a,b) {    return {labels: a,datasets: b};});
+   var defStyle = function (f) {
+      return {fillColor: f(0.2)
+             ,strokeColor: f(1.0)
+             ,pointColor: f(1.0)
+             ,pointStrokeColor: $Color.white
+             ,pointHighlightFill: $Color.white
+             ,pointHighlightStroke: f(1.0)};
+   };
+   var defaultStyle = defStyle(A3($Color.rgba,220,220,220));
+   var Style = F6(function (a,b,c,d,e,f) {
+      return {fillColor: a,strokeColor: b,pointColor: c,pointStrokeColor: d,pointHighlightFill: e,pointHighlightStroke: f};
+   });
+   var defaultOptions = {scaleShowGridLines: true
+                        ,scaleGridLineColor: A4($Color.rgba,0,0,0,5.0e-2)
+                        ,scaleGridLineWidth: 1.0
+                        ,scaleShowHorizontalLines: true
+                        ,scaleShowVerticalLines: true
+                        ,bezierCurve: true
+                        ,bezierCurveTension: 0.4
+                        ,pointDot: true
+                        ,pointDotRadius: 4.0
+                        ,pointDotStrokeWidth: 1.0
+                        ,pointHitDetectionRadius: 20.0
+                        ,datasetStroke: true
+                        ,datasetStrokeWidth: 2.0
+                        ,datasetFill: true
+                        ,legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].strokeColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"};
+   var decodeOptions = function (o) {    return _U.update(o,{scaleGridLineColor: $Chartjs.showRGBA(o.scaleGridLineColor)});};
+   var chart = F4(function (w,h,c,o) {    return A5($Chartjs.chartRaw,"Line",w,h,decodeConfig(c),decodeOptions(o));});
+   var chart$ = F3(function (w,h,c) {    return A4(chart,w,h,c,defaultOptions);});
+   var OptionsRaw = function (a) {
+      return function (b) {
+         return function (c) {
+            return function (d) {
+               return function (e) {
+                  return function (f) {
+                     return function (g) {
+                        return function (h) {
+                           return function (i) {
+                              return function (j) {
+                                 return function (k) {
+                                    return function (l) {
+                                       return function (m) {
+                                          return function (n) {
+                                             return function (o) {
+                                                return {scaleShowGridLines: a
+                                                       ,scaleGridLineColor: b
+                                                       ,scaleGridLineWidth: c
+                                                       ,scaleShowHorizontalLines: d
+                                                       ,scaleShowVerticalLines: e
+                                                       ,bezierCurve: f
+                                                       ,bezierCurveTension: g
+                                                       ,pointDot: h
+                                                       ,pointDotRadius: i
+                                                       ,pointDotStrokeWidth: j
+                                                       ,pointHitDetectionRadius: k
+                                                       ,datasetStroke: l
+                                                       ,datasetStrokeWidth: m
+                                                       ,datasetFill: n
+                                                       ,legendTemplate: o};
+                                             };
+                                          };
+                                       };
+                                    };
+                                 };
+                              };
+                           };
+                        };
+                     };
+                  };
+               };
+            };
+         };
+      };
+   };
+   var Options = function (a) {
+      return function (b) {
+         return function (c) {
+            return function (d) {
+               return function (e) {
+                  return function (f) {
+                     return function (g) {
+                        return function (h) {
+                           return function (i) {
+                              return function (j) {
+                                 return function (k) {
+                                    return function (l) {
+                                       return function (m) {
+                                          return function (n) {
+                                             return function (o) {
+                                                return {scaleShowGridLines: a
+                                                       ,scaleGridLineColor: b
+                                                       ,scaleGridLineWidth: c
+                                                       ,scaleShowHorizontalLines: d
+                                                       ,scaleShowVerticalLines: e
+                                                       ,bezierCurve: f
+                                                       ,bezierCurveTension: g
+                                                       ,pointDot: h
+                                                       ,pointDotRadius: i
+                                                       ,pointDotStrokeWidth: j
+                                                       ,pointHitDetectionRadius: k
+                                                       ,datasetStroke: l
+                                                       ,datasetStrokeWidth: m
+                                                       ,datasetFill: n
+                                                       ,legendTemplate: o};
+                                             };
+                                          };
+                                       };
+                                    };
+                                 };
+                              };
+                           };
+                        };
+                     };
+                  };
+               };
+            };
+         };
+      };
+   };
+   return _elm.Chartjs.Line.values = {_op: _op
+                                     ,chart: chart
+                                     ,chart$: chart$
+                                     ,defaultOptions: defaultOptions
+                                     ,defStyle: defStyle
+                                     ,defaultStyle: defaultStyle
+                                     ,Options: Options
+                                     ,Style: Style};
+};

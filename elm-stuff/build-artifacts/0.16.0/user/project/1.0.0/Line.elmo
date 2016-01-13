@@ -1,0 +1,27 @@
+Elm.Line = Elm.Line || {};
+Elm.Line.make = function (_elm) {
+   "use strict";
+   _elm.Line = _elm.Line || {};
+   if (_elm.Line.values) return _elm.Line.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Chartjs$Line = Elm.Chartjs.Line.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var mail = function () {    var m = $Signal.mailbox(false);return _U.update(m,{signal: A3($Signal.foldp,$Basics.always($Basics.not),false,m.signal)});}();
+   var data = {ctor: "_Tuple2"
+              ,_0: _U.list(["January","February","March","April","May","June","July"])
+              ,_1: _U.list([{ctor: "_Tuple3"
+                            ,_0: "My First dataset"
+                            ,_1: $Chartjs$Line.defStyle(A3($Color.rgba,220,220,220))
+                            ,_2: _U.list([65,59,80,81,56,55,40])}])};
+   var view = A2($Html.div,_U.list([]),_U.list([$Html.fromElement(A4($Chartjs$Line.chart,700,300,data,$Chartjs$Line.defaultOptions))]));
+   var main = view;
+   return _elm.Line.values = {_op: _op,data: data,mail: mail,view: view,main: main};
+};

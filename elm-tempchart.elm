@@ -1,18 +1,18 @@
-module ElmTempchart where
 import Http
 import Json.Decode as Json exposing ((:=))
 import Task exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (..)
 import StartApp
 import Effects exposing (Effects, Never)
 import Time exposing (Time, second)
-
+import Chartjs exposing (..)
+import Chartjs.Line exposing (..)
+import Color exposing (..)
 
 -- Model
 type alias TemperatureReading =
-  {temperature: String, readAt: String, unit: String}
+  {temperature: Float, readAt: String, unit: String}
 
 type alias Model = {
   temperatureReadings: List TemperatureReading
@@ -57,9 +57,41 @@ update action model =
 
 view: Signal.Address Action -> Model ->Html
 view address model =
-  div [][
-  button [onClick address RequestReadings][text "POTATO"]
-  ,div [] [(text (toString model.temperatureReadings))]]
+
+  div[]
+  [
+    (drawChart (extractAllTimes model) (extractAllTemps model))
+  ]
+
+extractAttributes : (a -> b) -> List a -> List b
+extractAttributes attributeFunction list =
+  List.map attributeFunction list
+
+
+extractAllTimes : Model -> List String
+extractAllTimes model =
+  extractAttributes .readAt model.temperatureReadings
+
+extractAllTemps : Model -> List Float
+extractAllTemps model =
+  extractAttributes .temperature model.temperatureReadings
+
+-- THIS IS THE ACTUAL CODE
+-- view address model =
+--   div [][
+--   button [onClick address RequestReadings][text "POTATO"]
+--   ,div [] [(text (toString model.temperatureReadings))]]
+drawChart :  Chartjs.Labels -> List Float -> Html
+drawChart horizontal_axis_data vertical_axis_data =
+  let
+    data =
+      ( horizontal_axis_data
+      , [ ( "Time"
+          , defStyle (rgba 220 220 220)
+          , vertical_axis_data )
+        ] )
+  in
+    div [] [fromElement <| (chart 700 300 data defaultOptions)]
 
 myStyle : Attribute
 myStyle =
@@ -84,13 +116,12 @@ httpGetCall :Task Http.Error (List TemperatureReading)
 httpGetCall  =
   Http.get jd (Http.url "http://localhost:3000/" [])
 
-
 jd : Json.Decoder (List TemperatureReading)
 jd =
   let tempobj =
     Json.object3
         TemperatureReading
-        ("temperature" := Json.string)
+        ("temperature" := Json.float)
         ("readAt" := Json.string)
         ("unit" := Json.string)
   in

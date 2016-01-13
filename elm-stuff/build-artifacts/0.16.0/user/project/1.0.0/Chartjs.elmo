@@ -1,0 +1,22 @@
+Elm.Chartjs = Elm.Chartjs || {};
+Elm.Chartjs.make = function (_elm) {
+   "use strict";
+   _elm.Chartjs = _elm.Chartjs || {};
+   if (_elm.Chartjs.values) return _elm.Chartjs.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Native$Chartjs = Elm.Native.Chartjs.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var chartRaw = $Native$Chartjs.chartRaw;
+   var showRGBA = $Native$Chartjs.showRGBA;
+   var toArray = $Native$Chartjs.toArray;
+   var JSArray = {ctor: "JSArray"};
+   return _elm.Chartjs.values = {_op: _op,JSArray: JSArray,toArray: toArray,showRGBA: showRGBA,chartRaw: chartRaw};
+};
