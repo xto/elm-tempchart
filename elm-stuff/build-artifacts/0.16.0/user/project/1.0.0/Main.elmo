@@ -71,13 +71,13 @@ Elm.Main.make = function (_elm) {
       A2($Json$Decode._op[":="],"unit",$Json$Decode.string));
       return A2($Json$Decode._op[":="],"temperatures",$Json$Decode.list(tempobj));
    }();
-   var getTempFromApiTask = A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])));
-   var getTemp = $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(getTempFromApiTask)));
-   var init = {ctor: "_Tuple2",_0: A3(Model,_U.list([]),"",false),_1: getTemp};
+   var getTempFromApiTask = $Task.toMaybe(A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([]))));
+   var getTempAction = $Effects.task(A2($Task.map,LoadReadings,getTempFromApiTask));
+   var init = {ctor: "_Tuple2",_0: A3(Model,_U.list([]),"",false),_1: getTempAction};
    var update = F2(function (action,model) {
       var _p0 = action;
       switch (_p0.ctor)
-      {case "RequestReadings": return {ctor: "_Tuple2",_0: model,_1: getTemp};
+      {case "RequestReadings": return {ctor: "_Tuple2",_0: model,_1: getTempAction};
          case "LoadReadings": var _p2 = _p0._0;
            var eval_readings = A2($Maybe.withDefault,_U.list([]),_p2);
            var _p1 = _p2;
@@ -95,14 +95,10 @@ Elm.Main.make = function (_elm) {
    var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([A2($Signal.map,LoadReadings,readingsMailbox.signal)])});
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
    var main = app.html;
-   var httpGet = function (t) {
-      return A2($Task.andThen,
-      $Task.toMaybe(getTempFromApiTask),
-      function (maybeTempReadings) {
-         return A2($Signal.send,readingsMailbox.address,maybeTempReadings);
-      });
+   var getTempTask = function (t) {
+      return A2($Task.andThen,getTempFromApiTask,function (maybeTempReadings) {    return A2($Signal.send,readingsMailbox.address,maybeTempReadings);});
    };
-   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A2($Signal.map,httpGet,clock));
+   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A2($Signal.map,getTempTask,clock));
    return _elm.Main.values = {_op: _op
                              ,TemperatureReading: TemperatureReading
                              ,Model: Model
@@ -119,11 +115,11 @@ Elm.Main.make = function (_elm) {
                              ,extractAllTemps: extractAllTemps
                              ,drawChart: drawChart
                              ,entryForm: entryForm
-                             ,getTemp: getTemp
+                             ,getTempAction: getTempAction
                              ,getTempFromApiTask: getTempFromApiTask
                              ,jd: jd
                              ,clock: clock
-                             ,httpGet: httpGet
+                             ,getTempTask: getTempTask
                              ,readingsMailbox: readingsMailbox
                              ,app: app
                              ,main: main};

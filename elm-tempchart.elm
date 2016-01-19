@@ -26,7 +26,7 @@ type alias Model = {
 init : (Model, Effects Action)
 init =
   ((Model [] "" False)
-  , getTemp)
+  , getTempAction)
 
 
 --- Update
@@ -44,7 +44,7 @@ update action model =
   case action of
     RequestReadings ->
       (model
-      , getTemp)
+      , getTempAction)
 
     LoadReadings newTemperatureReadings->
       let
@@ -129,17 +129,17 @@ entryForm address model =
 
 
 --Wiring
-getTemp : Effects Action
-getTemp =
-  getTempFromApiTask
-    |> Task.toMaybe
+getTempAction : Effects Action
+getTempAction =
+    getTempFromApiTask
     |> Task.map LoadReadings
     |> Effects.task
 
 
-getTempFromApiTask :Task Http.Error (List TemperatureReading)
+getTempFromApiTask :Task a (Maybe (List TemperatureReading))
 getTempFromApiTask  =
   Http.get jd (Http.url "http://localhost:3000/temperatures" [])
+  |> Task.toMaybe
 
 
 jd : Json.Decoder (List TemperatureReading)
@@ -157,10 +157,9 @@ clock =
   Time.every (2 * Time.second)
 
 
-httpGet : a -> Task b()
-httpGet t =
-  (getTempFromApiTask
-    |> Task.toMaybe)
+getTempTask : a -> Task b()
+getTempTask t =
+  (getTempFromApiTask)
     `Task.andThen`
     (\maybeTempReadings -> Signal.send readingsMailbox.address maybeTempReadings)
 
@@ -170,7 +169,7 @@ readingsMailbox = Signal.mailbox Nothing
 
 
 port periodicGet : Signal(Task() ())
-port periodicGet = Signal.map httpGet <| clock
+port periodicGet = Signal.map getTempTask <| clock
 
 
 -- Main
