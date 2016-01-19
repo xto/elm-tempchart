@@ -15,6 +15,7 @@ import Color exposing (..)
 type alias TemperatureReading =
   {temperature: Float, readAt: String, unit: String}
 
+
 type alias Model = {
   temperatureReadings: List TemperatureReading
   , mashName: String
@@ -25,7 +26,7 @@ type alias Model = {
 init : (Model, Effects Action)
 init =
   ((Model [] "" False)
-  , getTemp httpGetCall)
+  , getTemp)
 
 
 --- Update
@@ -38,13 +39,12 @@ type Action
   | UpdateMashName String
 
 
-
 update: Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     RequestReadings ->
       (model
-      , getTemp httpGetCall)
+      , getTemp)
 
     LoadReadings newTemperatureReadings->
       let
@@ -68,6 +68,7 @@ update action model =
       (Model model.temperatureReadings mashName model.mashNamed
       ,Effects.none)
 
+
 view: Signal.Address Action -> Model ->Html
 view address model =
 
@@ -85,9 +86,11 @@ extractAllTimes : Model -> List String
 extractAllTimes model =
   extractAttributes .readAt model.temperatureReadings
 
+
 extractAllTemps : Model -> List Float
 extractAllTemps model =
   extractAttributes .temperature model.temperatureReadings
+
 
 drawChart :  Chartjs.Labels -> List Float -> Html
 drawChart horizontal_axis_data vertical_axis_data =
@@ -126,16 +129,18 @@ entryForm address model =
 
 
 --Wiring
-getTemp : Task a (List TemperatureReading)-> Effects Action
-getTemp httpGetCallFunc =
-  httpGetCallFunc
+getTemp : Effects Action
+getTemp =
+  getTempFromApiTask
     |> Task.toMaybe
     |> Task.map LoadReadings
     |> Effects.task
 
-httpGetCall :Task Http.Error (List TemperatureReading)
-httpGetCall  =
+
+getTempFromApiTask :Task Http.Error (List TemperatureReading)
+getTempFromApiTask  =
   Http.get jd (Http.url "http://localhost:3000/temperatures" [])
+
 
 jd : Json.Decoder (List TemperatureReading)
 jd =
@@ -151,30 +156,22 @@ clock: Signal Time
 clock =
   Time.every (2 * Time.second)
 
--- httpGet: a -> Effects Action
--- httpGet t =
---   Http.get jd (Http.url "http://localhost:3000/temperatures" [])
---     |> Task.toMaybe
---     |> Task.map LoadReadings
---     |> Effects.task
 
-
--- periodicGet: Signal Action
--- periodicGet =
---   Signal.map (httpGet) clock
---   |> Signal.map RequestReadingsOnTime
 httpGet : a -> Task b()
 httpGet t =
-  (Http.get jd (Http.url "http://localhost:3000/temperatures" [])
+  (getTempFromApiTask
     |> Task.toMaybe)
     `Task.andThen`
     (\maybeTempReadings -> Signal.send readingsMailbox.address maybeTempReadings)
 
+
 readingsMailbox : Signal.Mailbox (Maybe (List TemperatureReading))
 readingsMailbox = Signal.mailbox Nothing
 
+
 port periodicGet : Signal(Task() ())
 port periodicGet = Signal.map httpGet <| clock
+
 
 -- Main
 app :{html : Signal Html, model : Signal Model, tasks : Signal (Task Effects.Never())}

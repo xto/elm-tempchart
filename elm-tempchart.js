@@ -14811,7 +14811,6 @@ Elm.Main.make = function (_elm) {
    var RequestReadingsOnTime = function (a) {    return {ctor: "RequestReadingsOnTime",_0: a};};
    var RequestReadings = {ctor: "RequestReadings"};
    var LoadReadings = function (a) {    return {ctor: "LoadReadings",_0: a};};
-   var getTemp = function (httpGetCallFunc) {    return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(httpGetCallFunc)));};
    var Model = F3(function (a,b,c) {    return {temperatureReadings: a,mashName: b,mashNamed: c};});
    var TemperatureReading = F3(function (a,b,c) {    return {temperature: a,readAt: b,unit: c};});
    var jd = function () {
@@ -14822,12 +14821,13 @@ Elm.Main.make = function (_elm) {
       A2($Json$Decode._op[":="],"unit",$Json$Decode.string));
       return A2($Json$Decode._op[":="],"temperatures",$Json$Decode.list(tempobj));
    }();
-   var httpGetCall = A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])));
-   var init = {ctor: "_Tuple2",_0: A3(Model,_U.list([]),"",false),_1: getTemp(httpGetCall)};
+   var getTempFromApiTask = A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])));
+   var getTemp = $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(getTempFromApiTask)));
+   var init = {ctor: "_Tuple2",_0: A3(Model,_U.list([]),"",false),_1: getTemp};
    var update = F2(function (action,model) {
       var _p0 = action;
       switch (_p0.ctor)
-      {case "RequestReadings": return {ctor: "_Tuple2",_0: model,_1: getTemp(httpGetCall)};
+      {case "RequestReadings": return {ctor: "_Tuple2",_0: model,_1: getTemp};
          case "LoadReadings": var _p2 = _p0._0;
            var eval_readings = A2($Maybe.withDefault,_U.list([]),_p2);
            var _p1 = _p2;
@@ -14847,7 +14847,7 @@ Elm.Main.make = function (_elm) {
    var main = app.html;
    var httpGet = function (t) {
       return A2($Task.andThen,
-      $Task.toMaybe(A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])))),
+      $Task.toMaybe(getTempFromApiTask),
       function (maybeTempReadings) {
          return A2($Signal.send,readingsMailbox.address,maybeTempReadings);
       });
@@ -14870,7 +14870,7 @@ Elm.Main.make = function (_elm) {
                              ,drawChart: drawChart
                              ,entryForm: entryForm
                              ,getTemp: getTemp
-                             ,httpGetCall: httpGetCall
+                             ,getTempFromApiTask: getTempFromApiTask
                              ,jd: jd
                              ,clock: clock
                              ,httpGet: httpGet
