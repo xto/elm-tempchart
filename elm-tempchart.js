@@ -14706,7 +14706,7 @@ Elm.Main.make = function (_elm) {
    $Task = Elm.Task.make(_elm),
    $Time = Elm.Time.make(_elm);
    var _op = {};
-   var clock = $Time.every($Time.second);
+   var clock = $Time.every(2 * $Time.second);
    var myStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "width",_1: "100%"}
                                                 ,{ctor: "_Tuple2",_0: "height",_1: "40px"}
                                                 ,{ctor: "_Tuple2",_0: "padding",_1: "10px 0"}
@@ -14716,12 +14716,14 @@ Elm.Main.make = function (_elm) {
       var data = {ctor: "_Tuple2"
                  ,_0: horizontal_axis_data
                  ,_1: _U.list([{ctor: "_Tuple3",_0: "Time",_1: $Chartjs$Line.defStyle(A3($Color.rgba,220,220,220)),_2: vertical_axis_data}])};
-      return A2($Html.div,_U.list([]),_U.list([$Html.fromElement(A4($Chartjs$Line.chart,700,300,data,$Chartjs$Line.defaultOptions))]));
+      return A2($Html.div,_U.list([]),_U.list([$Html.fromElement(A4($Chartjs$Line.chart,800,600,data,$Chartjs$Line.defaultOptions))]));
    });
    var extractAttributes = F2(function (attributeFunction,list) {    return A2($List.map,attributeFunction,list);});
    var extractAllTimes = function (model) {    return A2(extractAttributes,function (_) {    return _.readAt;},model.temperatureReadings);};
    var extractAllTemps = function (model) {    return A2(extractAttributes,function (_) {    return _.temperature;},model.temperatureReadings);};
-   var view = F2(function (address,model) {    return A2($Html.div,_U.list([]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model))]));});
+   var view = F2(function (address,model) {
+      return A2($Html.div,_U.list([$Html$Attributes.$class("container")]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model))]));
+   });
    var RequestReadingsOnTime = function (a) {    return {ctor: "RequestReadingsOnTime",_0: a};};
    var LoadReadings = function (a) {    return {ctor: "LoadReadings",_0: a};};
    var getTemp = function (httpGetCallFunc) {    return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(httpGetCallFunc)));};
@@ -14736,7 +14738,7 @@ Elm.Main.make = function (_elm) {
       A2($Json$Decode._op[":="],"unit",$Json$Decode.string));
       return A2($Json$Decode._op[":="],"temperatures",$Json$Decode.list(tempobj));
    }();
-   var httpGetCall = A2($Http.get,jd,A2($Http.url,"http://localhost:3000/",_U.list([])));
+   var httpGetCall = A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])));
    var init = {ctor: "_Tuple2",_0: Model(_U.list([])),_1: getTemp(httpGetCall)};
    var update = F2(function (action,model) {
       var _p0 = action;
@@ -14753,7 +14755,7 @@ Elm.Main.make = function (_elm) {
          default: return {ctor: "_Tuple2",_0: model,_1: _p0._0};}
    });
    var httpGet = function (t) {
-      return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(A2($Http.get,jd,A2($Http.url,"http://localhost:3000/",_U.list([]))))));
+      return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([]))))));
    };
    var periodicGet = A2($Signal.map,RequestReadingsOnTime,A2($Signal.map,httpGet,clock));
    var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([periodicGet])});

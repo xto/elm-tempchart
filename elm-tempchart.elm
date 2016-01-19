@@ -58,7 +58,7 @@ update action model =
 view: Signal.Address Action -> Model ->Html
 view address model =
 
-  div[]
+  div[class "container"]
   [
     (drawChart (extractAllTimes model) (extractAllTemps model))
   ]
@@ -91,7 +91,7 @@ drawChart horizontal_axis_data vertical_axis_data =
           , vertical_axis_data )
         ] )
   in
-    div [] [fromElement <| (chart 700 300 data defaultOptions)]
+    div [] [fromElement <| (chart 800 600 data defaultOptions)]
 
 myStyle : Attribute
 myStyle =
@@ -114,7 +114,7 @@ getTemp httpGetCallFunc =
 
 httpGetCall :Task Http.Error (List TemperatureReading)
 httpGetCall  =
-  Http.get jd (Http.url "http://localhost:3000/" [])
+  Http.get jd (Http.url "http://localhost:3000/temperatures" [])
 
 jd : Json.Decoder (List TemperatureReading)
 jd =
@@ -128,11 +128,11 @@ jd =
     "temperatures" := Json.list tempobj
 clock: Signal Time
 clock =
-  Time.every Time.second
+  Time.every (2 * Time.second)
 
 httpGet: a -> Effects Action
 httpGet t =
-  Http.get jd (Http.url "http://localhost:3000/" [])
+  Http.get jd (Http.url "http://localhost:3000/temperatures" [])
     |> Task.toMaybe
     |> Task.map LoadReadings
     |> Effects.task
