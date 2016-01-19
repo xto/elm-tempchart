@@ -3,6 +3,7 @@ import Json.Decode as Json exposing ((:=))
 import Task exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (on, targetValue, onClick)
 import StartApp
 import Effects exposing (Effects, Never)
 import Time exposing (Time, second)
@@ -16,21 +17,27 @@ type alias TemperatureReading =
 
 type alias Model = {
   temperatureReadings: List TemperatureReading
+  , mashName: String
+  , mashNamed: Bool
 }
 
 
 init : (Model, Effects Action)
 init =
-  (Model []
+  ((Model [] "" False)
   , getTemp httpGetCall)
 
 
 --- Update
 
 type Action
-  = RequestReadings
-  | LoadReadings (Maybe (List TemperatureReading))
+  = LoadReadings (Maybe (List TemperatureReading))
+  | RequestReadings
   | RequestReadingsOnTime (Effects Action)
+  | SetMashName
+  | UpdateMashName String
+
+
 
 update: Action -> Model -> (Model, Effects Action)
 update action model =
@@ -48,18 +55,24 @@ update action model =
           Nothing ->
             (model, Effects.none)
           Maybe.Just potato ->
-            ( Model (List.append model.temperatureReadings eval_readings)
+            ( Model (List.append model.temperatureReadings eval_readings) model.mashName model.mashNamed
               ,Effects.none
             )
     RequestReadingsOnTime effect ->
       (model, effect)
+    SetMashName ->
+      (Model model.temperatureReadings model.mashName True
+      ,Effects.none)
 
+    UpdateMashName mashName ->
+      (Model model.temperatureReadings mashName model.mashNamed
+      ,Effects.none)
 
 view: Signal.Address Action -> Model ->Html
 view address model =
 
   div[class "container"]
-  [
+  [ entryForm address model,
     (drawChart (extractAllTimes model) (extractAllTemps model))
   ]
 
@@ -76,11 +89,6 @@ extractAllTemps : Model -> List Float
 extractAllTemps model =
   extractAttributes .temperature model.temperatureReadings
 
--- THIS IS THE ACTUAL CODE
--- view address model =
---   div [][
---   button [onClick address RequestReadings][text "POTATO"]
---   ,div [] [(text (toString model.temperatureReadings))]]
 drawChart :  Chartjs.Labels -> List Float -> Html
 drawChart horizontal_axis_data vertical_axis_data =
   let
@@ -93,15 +101,28 @@ drawChart horizontal_axis_data vertical_axis_data =
   in
     div [] [fromElement <| (chart 800 600 data defaultOptions)]
 
-myStyle : Attribute
-myStyle =
-  style
-      [ ("width", "100%")
-      , ("height", "40px")
-      , ("padding", "10px 0")
-      , ("font-size", "2em")
-      , ("text-align", "center")
-      ]
+
+entryForm: Signal.Address Action -> Model -> Html
+entryForm address model =
+  let
+    setMashNameButton =
+      if model.mashNamed
+      then span[][text "Mash name set!"]
+      else
+        button[ class "setName", onClick address SetMashName] [text "Set Mash Name"]
+  in
+    div [] [
+      input [
+        type' "text",
+        placeholder "Enter Mash Name",
+        value model.mashName,
+        name "phrase",
+        autofocus True,
+        disabled model.mashNamed,
+        on "input" targetValue (\v -> Signal.message address (UpdateMashName v))
+      ][],
+      setMashNameButton
+    ]
 
 
 --Wiring
@@ -130,19 +151,30 @@ clock: Signal Time
 clock =
   Time.every (2 * Time.second)
 
-httpGet: a -> Effects Action
+-- httpGet: a -> Effects Action
+-- httpGet t =
+--   Http.get jd (Http.url "http://localhost:3000/temperatures" [])
+--     |> Task.toMaybe
+--     |> Task.map LoadReadings
+--     |> Effects.task
+
+
+-- periodicGet: Signal Action
+-- periodicGet =
+--   Signal.map (httpGet) clock
+--   |> Signal.map RequestReadingsOnTime
+httpGet : a -> Task b()
 httpGet t =
-  Http.get jd (Http.url "http://localhost:3000/temperatures" [])
-    |> Task.toMaybe
-    |> Task.map LoadReadings
-    |> Effects.task
+  (Http.get jd (Http.url "http://localhost:3000/temperatures" [])
+    |> Task.toMaybe)
+    `Task.andThen`
+    (\maybeTempReadings -> Signal.send readingsMailbox.address maybeTempReadings)
 
+readingsMailbox : Signal.Mailbox (Maybe (List TemperatureReading))
+readingsMailbox = Signal.mailbox Nothing
 
-periodicGet: Signal Action
-periodicGet =
-  Signal.map (httpGet) clock
-  |> Signal.map RequestReadingsOnTime
-
+port periodicGet : Signal(Task() ())
+port periodicGet = Signal.map httpGet <| clock
 
 -- Main
 app :{html : Signal Html, model : Signal Model, tasks : Signal (Task Effects.Never())}
@@ -151,7 +183,7 @@ app =
     { init = init
     , update = update
     , view = view
-    , inputs = [periodicGet]
+    , inputs = [Signal.map LoadReadings readingsMailbox.signal]
     }
 
 

@@ -10573,6 +10573,72 @@ Elm.Html.Attributes.make = function (_elm) {
                                         ,property: property
                                         ,attribute: attribute};
 };
+Elm.Html = Elm.Html || {};
+Elm.Html.Events = Elm.Html.Events || {};
+Elm.Html.Events.make = function (_elm) {
+   "use strict";
+   _elm.Html = _elm.Html || {};
+   _elm.Html.Events = _elm.Html.Events || {};
+   if (_elm.Html.Events.values) return _elm.Html.Events.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $VirtualDom = Elm.VirtualDom.make(_elm);
+   var _op = {};
+   var keyCode = A2($Json$Decode._op[":="],"keyCode",$Json$Decode.$int);
+   var targetChecked = A2($Json$Decode.at,_U.list(["target","checked"]),$Json$Decode.bool);
+   var targetValue = A2($Json$Decode.at,_U.list(["target","value"]),$Json$Decode.string);
+   var defaultOptions = $VirtualDom.defaultOptions;
+   var Options = F2(function (a,b) {    return {stopPropagation: a,preventDefault: b};});
+   var onWithOptions = $VirtualDom.onWithOptions;
+   var on = $VirtualDom.on;
+   var messageOn = F3(function (name,addr,msg) {    return A3(on,name,$Json$Decode.value,function (_p0) {    return A2($Signal.message,addr,msg);});});
+   var onClick = messageOn("click");
+   var onDoubleClick = messageOn("dblclick");
+   var onMouseMove = messageOn("mousemove");
+   var onMouseDown = messageOn("mousedown");
+   var onMouseUp = messageOn("mouseup");
+   var onMouseEnter = messageOn("mouseenter");
+   var onMouseLeave = messageOn("mouseleave");
+   var onMouseOver = messageOn("mouseover");
+   var onMouseOut = messageOn("mouseout");
+   var onBlur = messageOn("blur");
+   var onFocus = messageOn("focus");
+   var onSubmit = messageOn("submit");
+   var onKey = F3(function (name,addr,handler) {    return A3(on,name,keyCode,function (code) {    return A2($Signal.message,addr,handler(code));});});
+   var onKeyUp = onKey("keyup");
+   var onKeyDown = onKey("keydown");
+   var onKeyPress = onKey("keypress");
+   return _elm.Html.Events.values = {_op: _op
+                                    ,onBlur: onBlur
+                                    ,onFocus: onFocus
+                                    ,onSubmit: onSubmit
+                                    ,onKeyUp: onKeyUp
+                                    ,onKeyDown: onKeyDown
+                                    ,onKeyPress: onKeyPress
+                                    ,onClick: onClick
+                                    ,onDoubleClick: onDoubleClick
+                                    ,onMouseMove: onMouseMove
+                                    ,onMouseDown: onMouseDown
+                                    ,onMouseUp: onMouseUp
+                                    ,onMouseEnter: onMouseEnter
+                                    ,onMouseLeave: onMouseLeave
+                                    ,onMouseOver: onMouseOver
+                                    ,onMouseOut: onMouseOut
+                                    ,on: on
+                                    ,onWithOptions: onWithOptions
+                                    ,defaultOptions: defaultOptions
+                                    ,targetValue: targetValue
+                                    ,targetChecked: targetChecked
+                                    ,keyCode: keyCode
+                                    ,Options: Options};
+};
 Elm.Native.Http = {};
 Elm.Native.Http.make = function(localRuntime) {
 
@@ -14696,6 +14762,7 @@ Elm.Main.make = function (_elm) {
    $Effects = Elm.Effects.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
    $Http = Elm.Http.make(_elm),
    $Json$Decode = Elm.Json.Decode.make(_elm),
    $List = Elm.List.make(_elm),
@@ -14706,12 +14773,8 @@ Elm.Main.make = function (_elm) {
    $Task = Elm.Task.make(_elm),
    $Time = Elm.Time.make(_elm);
    var _op = {};
+   var readingsMailbox = $Signal.mailbox($Maybe.Nothing);
    var clock = $Time.every(2 * $Time.second);
-   var myStyle = $Html$Attributes.style(_U.list([{ctor: "_Tuple2",_0: "width",_1: "100%"}
-                                                ,{ctor: "_Tuple2",_0: "height",_1: "40px"}
-                                                ,{ctor: "_Tuple2",_0: "padding",_1: "10px 0"}
-                                                ,{ctor: "_Tuple2",_0: "font-size",_1: "2em"}
-                                                ,{ctor: "_Tuple2",_0: "text-align",_1: "center"}]));
    var drawChart = F2(function (horizontal_axis_data,vertical_axis_data) {
       var data = {ctor: "_Tuple2"
                  ,_0: horizontal_axis_data
@@ -14721,14 +14784,35 @@ Elm.Main.make = function (_elm) {
    var extractAttributes = F2(function (attributeFunction,list) {    return A2($List.map,attributeFunction,list);});
    var extractAllTimes = function (model) {    return A2(extractAttributes,function (_) {    return _.readAt;},model.temperatureReadings);};
    var extractAllTemps = function (model) {    return A2(extractAttributes,function (_) {    return _.temperature;},model.temperatureReadings);};
+   var UpdateMashName = function (a) {    return {ctor: "UpdateMashName",_0: a};};
+   var SetMashName = {ctor: "SetMashName"};
+   var entryForm = F2(function (address,model) {
+      var setMashNameButton = model.mashNamed ? A2($Html.span,_U.list([]),_U.list([$Html.text("Mash name set!")])) : A2($Html.button,
+      _U.list([$Html$Attributes.$class("setName"),A2($Html$Events.onClick,address,SetMashName)]),
+      _U.list([$Html.text("Set Mash Name")]));
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.input,
+              _U.list([$Html$Attributes.type$("text")
+                      ,$Html$Attributes.placeholder("Enter Mash Name")
+                      ,$Html$Attributes.value(model.mashName)
+                      ,$Html$Attributes.name("phrase")
+                      ,$Html$Attributes.autofocus(true)
+                      ,$Html$Attributes.disabled(model.mashNamed)
+                      ,A3($Html$Events.on,"input",$Html$Events.targetValue,function (v) {    return A2($Signal.message,address,UpdateMashName(v));})]),
+              _U.list([]))
+              ,setMashNameButton]));
+   });
    var view = F2(function (address,model) {
-      return A2($Html.div,_U.list([$Html$Attributes.$class("container")]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model))]));
+      return A2($Html.div,
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([A2(entryForm,address,model),A2(drawChart,extractAllTimes(model),extractAllTemps(model))]));
    });
    var RequestReadingsOnTime = function (a) {    return {ctor: "RequestReadingsOnTime",_0: a};};
+   var RequestReadings = {ctor: "RequestReadings"};
    var LoadReadings = function (a) {    return {ctor: "LoadReadings",_0: a};};
    var getTemp = function (httpGetCallFunc) {    return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(httpGetCallFunc)));};
-   var RequestReadings = {ctor: "RequestReadings"};
-   var Model = function (a) {    return {temperatureReadings: a};};
+   var Model = F3(function (a,b,c) {    return {temperatureReadings: a,mashName: b,mashNamed: c};});
    var TemperatureReading = F3(function (a,b,c) {    return {temperature: a,readAt: b,unit: c};});
    var jd = function () {
       var tempobj = A4($Json$Decode.object3,
@@ -14739,7 +14823,7 @@ Elm.Main.make = function (_elm) {
       return A2($Json$Decode._op[":="],"temperatures",$Json$Decode.list(tempobj));
    }();
    var httpGetCall = A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])));
-   var init = {ctor: "_Tuple2",_0: Model(_U.list([])),_1: getTemp(httpGetCall)};
+   var init = {ctor: "_Tuple2",_0: A3(Model,_U.list([]),"",false),_1: getTemp(httpGetCall)};
    var update = F2(function (action,model) {
       var _p0 = action;
       switch (_p0.ctor)
@@ -14750,37 +14834,47 @@ Elm.Main.make = function (_elm) {
            if (_p1.ctor === "Nothing") {
                  return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
               } else {
-                 return {ctor: "_Tuple2",_0: Model(A2($List.append,model.temperatureReadings,eval_readings)),_1: $Effects.none};
+                 return {ctor: "_Tuple2"
+                        ,_0: A3(Model,A2($List.append,model.temperatureReadings,eval_readings),model.mashName,model.mashNamed)
+                        ,_1: $Effects.none};
               }
-         default: return {ctor: "_Tuple2",_0: model,_1: _p0._0};}
+         case "RequestReadingsOnTime": return {ctor: "_Tuple2",_0: model,_1: _p0._0};
+         case "SetMashName": return {ctor: "_Tuple2",_0: A3(Model,model.temperatureReadings,model.mashName,true),_1: $Effects.none};
+         default: return {ctor: "_Tuple2",_0: A3(Model,model.temperatureReadings,_p0._0,model.mashNamed),_1: $Effects.none};}
    });
-   var httpGet = function (t) {
-      return $Effects.task(A2($Task.map,LoadReadings,$Task.toMaybe(A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([]))))));
-   };
-   var periodicGet = A2($Signal.map,RequestReadingsOnTime,A2($Signal.map,httpGet,clock));
-   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([periodicGet])});
+   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([A2($Signal.map,LoadReadings,readingsMailbox.signal)])});
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
    var main = app.html;
+   var httpGet = function (t) {
+      return A2($Task.andThen,
+      $Task.toMaybe(A2($Http.get,jd,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])))),
+      function (maybeTempReadings) {
+         return A2($Signal.send,readingsMailbox.address,maybeTempReadings);
+      });
+   };
+   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A2($Signal.map,httpGet,clock));
    return _elm.Main.values = {_op: _op
                              ,TemperatureReading: TemperatureReading
                              ,Model: Model
                              ,init: init
-                             ,RequestReadings: RequestReadings
                              ,LoadReadings: LoadReadings
+                             ,RequestReadings: RequestReadings
                              ,RequestReadingsOnTime: RequestReadingsOnTime
+                             ,SetMashName: SetMashName
+                             ,UpdateMashName: UpdateMashName
                              ,update: update
                              ,view: view
                              ,extractAttributes: extractAttributes
                              ,extractAllTimes: extractAllTimes
                              ,extractAllTemps: extractAllTemps
                              ,drawChart: drawChart
-                             ,myStyle: myStyle
+                             ,entryForm: entryForm
                              ,getTemp: getTemp
                              ,httpGetCall: httpGetCall
                              ,jd: jd
                              ,clock: clock
                              ,httpGet: httpGet
-                             ,periodicGet: periodicGet
+                             ,readingsMailbox: readingsMailbox
                              ,app: app
                              ,main: main};
 };
