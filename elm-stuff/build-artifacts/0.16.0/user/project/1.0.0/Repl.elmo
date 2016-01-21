@@ -12,8 +12,6 @@ Elm.Repl.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
    var tsol = {ctor: "_Tuple0"};
-   var b = {first: "testasdasdds",last: "potatoasasdqds"};
-   var a = {first: "test",last: "potato"};
-   var deltron3030 = A2($List.map,function (_) {    return _.first;},_U.list([a,b]));
-   return _elm.Repl.values = {_op: _op,a: a,b: b,deltron3030: deltron3030,tsol: tsol};
+   var deltron3030 = !_U.eq(1,2);
+   return _elm.Repl.values = {_op: _op,deltron3030: deltron3030,tsol: tsol};
 };
