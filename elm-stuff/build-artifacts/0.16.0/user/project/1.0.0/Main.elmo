@@ -24,7 +24,18 @@ Elm.Main.make = function (_elm) {
    $Time = Elm.Time.make(_elm);
    var _op = {};
    var readingsMailbox = $Signal.mailbox($Maybe.Nothing);
+   var pausesMailBox = function () {
+      var m = $Signal.mailbox(false);
+      return _U.update(m,{signal: A3($Signal.foldp,$Basics.always($Basics.not),false,m.signal)});
+   }();
    var clock = $Time.every(2 * $Time.second);
+   var pauseButton = F2(function (address,model) {
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.button,
+      _U.list([$Html$Attributes.$class("pauseButton"),A2($Html$Events.onClick,pausesMailBox.address,true)]),
+      _U.list([$Html.text("Pause/Resume")]))]));
+   });
    var drawChart = F2(function (horizontal_axis_data,vertical_axis_data) {
       var data = {ctor: "_Tuple2"
                  ,_0: horizontal_axis_data
@@ -34,7 +45,7 @@ Elm.Main.make = function (_elm) {
    var extractAttributes = F2(function (attributeFunction,list) {    return A2($List.map,attributeFunction,list);});
    var extractAllTimes = function (model) {    return A2(extractAttributes,function (_) {    return _.readAt;},model.temperatureReadings);};
    var extractAllTemps = function (model) {    return A2(extractAttributes,function (_) {    return _.temperature;},model.temperatureReadings);};
-   var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
+   var TogglePause = {ctor: "TogglePause"};
    var UpdateMashName = function (a) {    return {ctor: "UpdateMashName",_0: a};};
    var SetMashName = {ctor: "SetMashName"};
    var entryForm = F2(function (address,model) {
@@ -54,21 +65,23 @@ Elm.Main.make = function (_elm) {
               _U.list([]))
               ,setMashNameButton]));
    });
-   var RequestReadingsOnTime = function (a) {    return {ctor: "RequestReadingsOnTime",_0: a};};
    var RequestReadings = {ctor: "RequestReadings"};
    var PostReadings = {ctor: "PostReadings"};
    var saveButton = F2(function (address,model) {
       return A2($Html.div,
       _U.list([]),
       _U.list([A2($Html.button,
-      _U.list([$Html$Attributes.$class("setName"),A2($Html$Events.onClick,address,PostReadings)]),
+      _U.list([$Html$Attributes.$class("saveButton"),A2($Html$Events.onClick,address,PostReadings)]),
       _U.list([$Html.text("Save Data")]))]));
    });
    var view = F2(function (address,model) {
       return A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
-      _U.list([A2(entryForm,address,model),A2(drawChart,extractAllTimes(model),extractAllTemps(model)),A2(saveButton,address,model)]));
+      _U.list([A2(entryForm,address,model)
+              ,A2($Html.div,_U.list([]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model)),A2(pauseButton,address,model)]))
+              ,A2(saveButton,address,model)]));
    });
+   var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
    var LoadReadings = function (a) {    return {ctor: "LoadReadings",_0: a};};
    var temperatureReadingToJsonString = function (temperatureReading) {
       var unitString = A2($Basics._op["++"],"\'unit\': \'",A2($Basics._op["++"],temperatureReading.unit,"\'"));
@@ -81,7 +94,7 @@ Elm.Main.make = function (_elm) {
       temperatureString,
       A2($Basics._op["++"],comma,A2($Basics._op["++"],readAtString,A2($Basics._op["++"],comma,A2($Basics._op["++"],unitString,"}"))))));
    };
-   var Model = F3(function (a,b,c) {    return {temperatureReadings: a,mashName: b,mashNamed: c};});
+   var Model = F4(function (a,b,c,d) {    return {temperatureReadings: a,mashName: b,mashNamed: c,paused: d};});
    var BasicHttpReponse = F2(function (a,b) {    return {status: a,body: b};});
    var basicApiResponseJsonDecoder = A3($Json$Decode.object2,
    BasicHttpReponse,
@@ -107,7 +120,7 @@ Elm.Main.make = function (_elm) {
    }();
    var getTempFromApiTask = $Task.toMaybe(A2($Http.get,temperatureReadingsJsonDecoder,A2($Http.url,"http://localhost:3000/temperatures",_U.list([]))));
    var getTempAction = $Effects.task(A2($Task.map,LoadReadings,getTempFromApiTask));
-   var init = {ctor: "_Tuple2",_0: A3(Model,_U.list([]),"",false),_1: getTempAction};
+   var init = {ctor: "_Tuple2",_0: A4(Model,_U.list([]),"",false,false),_1: getTempAction};
    var update = F2(function (action,model) {
       var _p0 = action;
       switch (_p0.ctor)
@@ -119,29 +132,33 @@ Elm.Main.make = function (_elm) {
                  return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
               } else {
                  return {ctor: "_Tuple2"
-                        ,_0: A3(Model,A2($List.append,model.temperatureReadings,eval_readings),model.mashName,model.mashNamed)
+                        ,_0: A4(Model,A2($List.append,model.temperatureReadings,eval_readings),model.mashName,model.mashNamed,model.paused)
                         ,_1: $Effects.none};
               }
-         case "RequestReadingsOnTime": return {ctor: "_Tuple2",_0: model,_1: _p0._0};
          case "SetMashName": return !_U.eq(model.mashName,"") ? {ctor: "_Tuple2"
-                                                                ,_0: A3(Model,model.temperatureReadings,model.mashName,true)
+                                                                ,_0: A4(Model,model.temperatureReadings,model.mashName,true,model.paused)
                                                                 ,_1: $Effects.none} : {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-         case "UpdateMashName": return {ctor: "_Tuple2",_0: A3(Model,model.temperatureReadings,_p0._0,model.mashNamed),_1: $Effects.none};
+         case "UpdateMashName": return {ctor: "_Tuple2",_0: A4(Model,model.temperatureReadings,_p0._0,model.mashNamed,model.paused),_1: $Effects.none};
          case "PostReadings": return {ctor: "_Tuple2",_0: model,_1: postReadings(model)};
-         default: var _p3 = _p0._0;
+         case "NoOp": var _p3 = _p0._0;
            if (_p3.ctor === "Nothing") {
                  return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
               } else {
                  return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-              }}
+              }
+         default: return {ctor: "_Tuple2",_0: A4(Model,model.temperatureReadings,model.mashName,model.mashNamed,$Basics.not(model.paused)),_1: $Effects.none};}
    });
    var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([A2($Signal.map,LoadReadings,readingsMailbox.signal)])});
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
    var main = app.html;
-   var getTempTask = function (t) {
-      return A2($Task.andThen,getTempFromApiTask,function (maybeTempReadings) {    return A2($Signal.send,readingsMailbox.address,maybeTempReadings);});
-   };
-   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A2($Signal.map,getTempTask,clock));
+   var getTempTask = F2(function (paused,time) {
+      return paused ? $Task.succeed({ctor: "_Tuple0"}) : A2($Task.andThen,
+      getTempFromApiTask,
+      function (maybeTempReadings) {
+         return A2($Signal.send,readingsMailbox.address,maybeTempReadings);
+      });
+   });
+   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A3($Signal.map2,getTempTask,pausesMailBox.signal,clock));
    return _elm.Main.values = {_op: _op
                              ,TemperatureReading: TemperatureReading
                              ,BasicHttpReponse: BasicHttpReponse
@@ -149,12 +166,12 @@ Elm.Main.make = function (_elm) {
                              ,temperatureReadingToJsonString: temperatureReadingToJsonString
                              ,init: init
                              ,LoadReadings: LoadReadings
+                             ,NoOp: NoOp
                              ,PostReadings: PostReadings
                              ,RequestReadings: RequestReadings
-                             ,RequestReadingsOnTime: RequestReadingsOnTime
                              ,SetMashName: SetMashName
                              ,UpdateMashName: UpdateMashName
-                             ,NoOp: NoOp
+                             ,TogglePause: TogglePause
                              ,update: update
                              ,view: view
                              ,extractAttributes: extractAttributes
@@ -163,6 +180,7 @@ Elm.Main.make = function (_elm) {
                              ,drawChart: drawChart
                              ,entryForm: entryForm
                              ,saveButton: saveButton
+                             ,pauseButton: pauseButton
                              ,postReadings: postReadings
                              ,getTempAction: getTempAction
                              ,getTempFromApiTask: getTempFromApiTask
@@ -170,6 +188,7 @@ Elm.Main.make = function (_elm) {
                              ,temperatureReadingsJsonDecoder: temperatureReadingsJsonDecoder
                              ,clock: clock
                              ,getTempTask: getTempTask
+                             ,pausesMailBox: pausesMailBox
                              ,readingsMailbox: readingsMailbox
                              ,app: app
                              ,main: main};

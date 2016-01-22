@@ -24,6 +24,7 @@ type alias Model = {
   temperatureReadings: List TemperatureReading
   , mashName: String
   , mashNamed: Bool
+  , paused: Bool
 }
 
 temperatureReadingToJsonString: TemperatureReading -> String
@@ -42,7 +43,7 @@ temperatureReadingToJsonString temperatureReading =
 
 init : (Model, Effects Action)
 init =
-  ((Model [] "" False)
+  ((Model [] "" False False)
   , getTempAction)
 
 
@@ -50,13 +51,12 @@ init =
 
 type Action
   = LoadReadings (Maybe (List TemperatureReading))
+  | NoOp (Maybe BasicHttpReponse)
   | PostReadings
   | RequestReadings
-  | RequestReadingsOnTime (Effects Action)
   | SetMashName
   | UpdateMashName String
-  | NoOp (Maybe BasicHttpReponse)
-
+  | TogglePause
 
 update: Action -> Model -> (Model, Effects Action)
 update action model =
@@ -74,21 +74,19 @@ update action model =
           Nothing ->
             (model, Effects.none)
           Maybe.Just potato ->
-            ( Model (List.append model.temperatureReadings eval_readings) model.mashName model.mashNamed
-              ,Effects.none
+            ( Model (List.append model.temperatureReadings eval_readings) model.mashName model.mashNamed model.paused
+                ,Effects.none
             )
-    RequestReadingsOnTime effect ->
-      (model, effect)
 
     SetMashName ->
       if model.mashName /= "" then
-        (Model model.temperatureReadings model.mashName True
+        (Model model.temperatureReadings model.mashName True model.paused
         ,Effects.none)
       else
         (model, Effects.none)
 
     UpdateMashName mashName ->
-      (Model model.temperatureReadings mashName model.mashNamed
+      (Model model.temperatureReadings mashName model.mashNamed model.paused
       ,Effects.none)
 
     PostReadings ->
@@ -101,6 +99,9 @@ update action model =
         Maybe.Just garbage ->
           (model, Effects.none)
 
+    TogglePause ->
+      (Model model.temperatureReadings model.mashName model.mashNamed (not model.paused)
+      ,Effects.none)
 
 
 view: Signal.Address Action -> Model ->Html
@@ -108,7 +109,7 @@ view address model =
 
   div[class "container"]
   [ entryForm address model
-    ,(drawChart (extractAllTimes model) (extractAllTemps model))
+    ,div[] [(drawChart (extractAllTimes model) (extractAllTemps model)), pauseButton address model]
     ,saveButton address model
   ]
 
@@ -165,8 +166,15 @@ entryForm address model =
 saveButton: Signal.Address Action-> Model -> Html
 saveButton address model =
   div [] [
-    button[ class "setName", onClick address PostReadings] [text "Save Data"]
+    button[ class "saveButton", onClick address PostReadings] [text "Save Data"]
   ]
+
+pauseButton: Signal.Address Action-> Model -> Html
+pauseButton address model =
+  div [] [
+    button[ class "pauseButton", onClick pausesMailBox.address True] [text "Pause/Resume"]
+  ]
+
 
 
 --Wiring
@@ -220,19 +228,29 @@ clock =
   Time.every (2 * Time.second)
 
 
-getTempTask : a -> Task b()
-getTempTask t =
-  (getTempFromApiTask)
-    `Task.andThen`
-    (\maybeTempReadings -> Signal.send readingsMailbox.address maybeTempReadings)
+getTempTask : Bool -> Time -> Task () ()
+getTempTask paused time =
+  if paused
+  then
+    Task.succeed ()
+  else
+    (getTempFromApiTask)
+      `Task.andThen`
+      (\maybeTempReadings -> Signal.send readingsMailbox.address maybeTempReadings)
 
+pausesMailBox: Signal.Mailbox Bool
+pausesMailBox =
+  let
+    m = Signal.mailbox False
+  in { m | signal =
+    Signal.foldp (always not) False m.signal }
 
 readingsMailbox : Signal.Mailbox (Maybe (List TemperatureReading))
 readingsMailbox = Signal.mailbox Nothing
 
 
 port periodicGet : Signal(Task() ())
-port periodicGet = Signal.map getTempTask <| clock
+port periodicGet = Signal.map2 getTempTask pausesMailBox.signal clock
 
 
 -- Main
