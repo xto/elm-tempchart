@@ -24,7 +24,7 @@ Elm.Main.make = function (_elm) {
    $Time = Elm.Time.make(_elm);
    var _op = {};
    var readingsMailbox = $Signal.mailbox($Maybe.Nothing);
-   var pausesMailBox = function () {
+   var pausedMailbox = function () {
       var m = $Signal.mailbox(false);
       return _U.update(m,{signal: A3($Signal.foldp,$Basics.always($Basics.not),false,m.signal)});
    }();
@@ -33,7 +33,7 @@ Elm.Main.make = function (_elm) {
       return A2($Html.div,
       _U.list([]),
       _U.list([A2($Html.button,
-      _U.list([$Html$Attributes.$class("pauseButton"),A2($Html$Events.onClick,pausesMailBox.address,true)]),
+      _U.list([$Html$Attributes.$class("pauseButton"),A2($Html$Events.onClick,pausedMailbox.address,true)]),
       _U.list([$Html.text("Pause/Resume")]))]));
    });
    var drawChart = F2(function (horizontal_axis_data,vertical_axis_data) {
@@ -158,7 +158,7 @@ Elm.Main.make = function (_elm) {
          return A2($Signal.send,readingsMailbox.address,maybeTempReadings);
       });
    });
-   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A3($Signal.map2,getTempTask,pausesMailBox.signal,clock));
+   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A3($Signal.map2,getTempTask,pausedMailbox.signal,clock));
    return _elm.Main.values = {_op: _op
                              ,TemperatureReading: TemperatureReading
                              ,BasicHttpReponse: BasicHttpReponse
@@ -188,7 +188,7 @@ Elm.Main.make = function (_elm) {
                              ,temperatureReadingsJsonDecoder: temperatureReadingsJsonDecoder
                              ,clock: clock
                              ,getTempTask: getTempTask
-                             ,pausesMailBox: pausesMailBox
+                             ,pausedMailbox: pausedMailbox
                              ,readingsMailbox: readingsMailbox
                              ,app: app
                              ,main: main};

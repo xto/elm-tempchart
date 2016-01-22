@@ -14780,12 +14780,11 @@ Elm.Main.make = function (_elm) {
    }();
    var clock = $Time.every(2 * $Time.second);
    var pauseButton = F2(function (address,model) {
-      var pauseLabel = model.paused ? "Resume" : "Pause";
       return A2($Html.div,
       _U.list([]),
       _U.list([A2($Html.button,
       _U.list([$Html$Attributes.$class("pauseButton"),A2($Html$Events.onClick,pausesMailBox.address,true)]),
-      _U.list([$Html.text(pauseLabel)]))]));
+      _U.list([$Html.text("Pause/Resume")]))]));
    });
    var drawChart = F2(function (horizontal_axis_data,vertical_axis_data) {
       var data = {ctor: "_Tuple2"

@@ -172,10 +172,8 @@ saveButton address model =
 pauseButton: Signal.Address Action-> Model -> Html
 pauseButton address model =
   div [] [
-    button[ class "pauseButton", onClick pausesMailBox.address True] [text "Pause/Resume"]
+    button[ class "pauseButton", onClick pausedMailbox.address True] [text "Pause/Resume"]
   ]
-
-
 
 --Wiring
 postReadings : Model -> Effects Action
@@ -238,8 +236,8 @@ getTempTask paused time =
       `Task.andThen`
       (\maybeTempReadings -> Signal.send readingsMailbox.address maybeTempReadings)
 
-pausesMailBox: Signal.Mailbox Bool
-pausesMailBox =
+pausedMailbox: Signal.Mailbox Bool
+pausedMailbox =
   let
     m = Signal.mailbox False
   in { m | signal =
@@ -250,7 +248,7 @@ readingsMailbox = Signal.mailbox Nothing
 
 
 port periodicGet : Signal(Task() ())
-port periodicGet = Signal.map2 getTempTask pausesMailBox.signal clock
+port periodicGet = Signal.map2 getTempTask pausedMailbox.signal clock
 
 
 -- Main
