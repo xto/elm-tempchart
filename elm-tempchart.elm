@@ -50,8 +50,9 @@ init =
 --- Update
 
 type Action
-  = LoadReadings (Maybe (List TemperatureReading))
-  | NoOp (Maybe BasicHttpReponse)
+  = HandleHttpResponse (Maybe BasicHttpReponse)
+  | LoadReadings (Maybe (List TemperatureReading))
+  | NoOp (Maybe ())
   | PostReadings
   | RequestReadings
   | SetMashName
@@ -73,7 +74,7 @@ update action model =
         case newTemperatureReadings of
           Nothing ->
             (model, Effects.none)
-          Maybe.Just potato ->
+          Maybe.Just postData ->
             ( Model (List.append model.temperatureReadings eval_readings) model.mashName model.mashNamed model.paused
                 ,Effects.none
             )
@@ -92,17 +93,26 @@ update action model =
     PostReadings ->
       (model, (postReadings model))
 
-    NoOp response ->
+    HandleHttpResponse response ->
       case response of
         Nothing ->
           (model, Effects.none)
         Maybe.Just garbage ->
           (model, Effects.none)
 
+    NoOp a ->
+      (model, Effects.none)
+
     TogglePause ->
       (Model model.temperatureReadings model.mashName model.mashNamed (not model.paused)
-      ,Effects.none)
+      ,signalPause )
 
+signalPause : Effects Action
+signalPause =
+  (Signal.send pausedMailbox.address True)
+  |> Task.toMaybe
+  |> Task.map NoOp
+  |> Effects.task
 
 view: Signal.Address Action -> Model ->Html
 view address model =
@@ -169,25 +179,32 @@ saveButton address model =
     button[ class "saveButton", onClick address PostReadings] [text "Save Data"]
   ]
 
-pauseButton: Signal.Address Action-> Model -> Html
+pauseButton: Signal.Address Action -> Model -> Html
 pauseButton address model =
-  div [] [
-    button[ class "pauseButton", onClick pausedMailbox.address True] [text "Pause/Resume"]
-  ]
+  let
+    label =
+      if model.paused then
+        "Resume"
+      else
+        "Pause"
+  in
+    div [] [
+      button[ class "pauseButton", onClick address TogglePause] [text label]
+    ]
 
 --Wiring
 postReadings : Model -> Effects Action
 postReadings model =
   let
-    potato =
+    postData =
       Http.multipart
         [ Http.stringData "mash_name" (model.mashName)
         , Http.stringData "temperatures" (toString(List.map temperatureReadingToJsonString model.temperatureReadings))
         ]
   in
-    Http.post basicApiResponseJsonDecoder (Http.url "http://localhost:3000/temperatures" []) (potato)
+    Http.post basicApiResponseJsonDecoder (Http.url "http://localhost:3000/temperatures" []) (postData)
     |> Task.toMaybe
-    |> Task.map NoOp
+    |> Task.map HandleHttpResponse
     |> Effects.task
 
 getTempAction : Effects Action
