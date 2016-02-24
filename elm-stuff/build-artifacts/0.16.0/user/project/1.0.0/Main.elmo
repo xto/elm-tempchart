@@ -8,6 +8,8 @@ Elm.Main.make = function (_elm) {
    $Chartjs = Elm.Chartjs.make(_elm),
    $Chartjs$Line = Elm.Chartjs.Line.make(_elm),
    $Color = Elm.Color.make(_elm),
+   $Date = Elm.Date.make(_elm),
+   $Date$Format = Elm.Date.Format.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
    $Html = Elm.Html.make(_elm),
@@ -35,24 +37,32 @@ Elm.Main.make = function (_elm) {
                  ,_1: _U.list([{ctor: "_Tuple3",_0: "Time",_1: $Chartjs$Line.defStyle(A3($Color.rgba,220,220,220)),_2: vertical_axis_data}])};
       return A2($Html.div,_U.list([]),_U.list([$Html.fromElement(A4($Chartjs$Line.chart,800,600,data,$Chartjs$Line.defaultOptions))]));
    });
+   var reformatDate = function (dateString) {
+      return A2($Date$Format.format,"%k:%M:%S",A2($Result.withDefault,$Date.fromTime(0),$Date.fromString(dateString)));
+   };
    var extractAttributes = F2(function (attributeFunction,list) {    return A2($List.map,attributeFunction,list);});
-   var extractAllTimes = function (model) {    return A2(extractAttributes,function (_) {    return _.readAt;},model.temperatureReadings);};
+   var extractAllTimes = function (model) {
+      var listTimes = A2(extractAttributes,function (_) {    return _.readAt;},model.temperatureReadings);
+      return A2($List.map,reformatDate,listTimes);
+   };
    var extractAllTemps = function (model) {    return A2(extractAttributes,function (_) {    return _.temperature;},model.temperatureReadings);};
    var TogglePause = {ctor: "TogglePause"};
    var pauseButton = F2(function (address,model) {
       var label = model.paused ? "Resume" : "Pause";
-      return A2($Html.div,
-      _U.list([]),
-      _U.list([A2($Html.button,_U.list([$Html$Attributes.$class("pauseButton"),A2($Html$Events.onClick,address,TogglePause)]),_U.list([$Html.text(label)]))]));
+      return A2($Html.button,
+      _U.list([$Html$Attributes.$class("btn btn-primary pauseButton"),A2($Html$Events.onClick,address,TogglePause)]),
+      _U.list([$Html.text(label)]));
    });
    var UpdateMashName = function (a) {    return {ctor: "UpdateMashName",_0: a};};
    var SetMashName = {ctor: "SetMashName"};
    var entryForm = F2(function (address,model) {
       var setMashNameButton = model.mashNamed ? A2($Html.span,_U.list([]),_U.list([$Html.text("Mash name set!")])) : A2($Html.button,
-      _U.list([$Html$Attributes.$class("setName"),A2($Html$Events.onClick,address,SetMashName)]),
+      _U.list([$Html$Attributes.$class("btn btn-primary btn-xs setName"),A2($Html$Events.onClick,address,SetMashName)]),
       _U.list([$Html.text("Set Mash Name")]));
       return A2($Html.div,
-      _U.list([]),
+      _U.list([$Html$Attributes.$class("flex-cell flex-cell--single")]),
+      _U.list([A2($Html.div,
+      _U.list([$Html$Attributes.$class("input-group")]),
       _U.list([A2($Html.input,
               _U.list([$Html$Attributes.type$("text")
                       ,$Html$Attributes.placeholder("Enter Mash Name")
@@ -62,23 +72,25 @@ Elm.Main.make = function (_elm) {
                       ,$Html$Attributes.disabled(model.mashNamed)
                       ,A3($Html$Events.on,"input",$Html$Events.targetValue,function (v) {    return A2($Signal.message,address,UpdateMashName(v));})]),
               _U.list([]))
-              ,setMashNameButton]));
+              ,setMashNameButton]))]));
    });
    var RequestReadings = {ctor: "RequestReadings"};
    var PostReadings = {ctor: "PostReadings"};
    var saveButton = F2(function (address,model) {
-      return A2($Html.div,
-      _U.list([]),
-      _U.list([A2($Html.button,
-      _U.list([$Html$Attributes.$class("saveButton"),A2($Html$Events.onClick,address,PostReadings)]),
-      _U.list([$Html.text("Save Data")]))]));
+      return A2($Html.button,
+      _U.list([$Html$Attributes.$class("btn btn-primary saveButton"),A2($Html$Events.onClick,address,PostReadings)]),
+      _U.list([$Html.text("Save Data")]));
    });
    var view = F2(function (address,model) {
       return A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
       _U.list([A2(entryForm,address,model)
-              ,A2($Html.div,_U.list([]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model)),A2(pauseButton,address,model)]))
-              ,A2(saveButton,address,model)]));
+              ,A2($Html.div,_U.list([$Html$Attributes.$class("flex-cell graph")]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model))]))
+              ,A2($Html.div,
+              _U.list([$Html$Attributes.$class("flex-cell")]),
+              _U.list([A2($Html.div,
+              _U.list([$Html$Attributes.$class("btn-group")]),
+              _U.list([A2(saveButton,address,model),A2(pauseButton,address,model)]))]))]));
    });
    var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
    var signalPause = $Effects.task(A2($Task.map,NoOp,$Task.toMaybe(A2($Signal.send,pausedMailbox.address,true))));
@@ -86,7 +98,9 @@ Elm.Main.make = function (_elm) {
    var HandleHttpResponse = function (a) {    return {ctor: "HandleHttpResponse",_0: a};};
    var temperatureReadingToJsonString = function (temperatureReading) {
       var unitString = A2($Basics._op["++"],"\'unit\': \'",A2($Basics._op["++"],temperatureReading.unit,"\'"));
-      var readAtString = A2($Basics._op["++"],"\'readAt\': \'",A2($Basics._op["++"],temperatureReading.readAt,"\'"));
+      var readAtString = A2($Basics._op["++"],
+      "\'readAt\': \'",
+      A2($Basics._op["++"],A2($Date$Format.format,"%k:%M:%S",A2($Result.withDefault,$Date.fromTime(0),$Date.fromString(temperatureReading.readAt))),"\'"));
       var comma = ", ";
       var temperatureString = A2($Basics._op["++"],"\'temperature\': \'",A2($Basics._op["++"],$Basics.toString(temperatureReading.temperature),"\'"));
       return A2($Basics._op["++"],
@@ -179,6 +193,7 @@ Elm.Main.make = function (_elm) {
                              ,signalPause: signalPause
                              ,view: view
                              ,extractAttributes: extractAttributes
+                             ,reformatDate: reformatDate
                              ,extractAllTimes: extractAllTimes
                              ,extractAllTemps: extractAllTemps
                              ,drawChart: drawChart

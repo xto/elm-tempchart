@@ -1,6 +1,5 @@
 import Http
 import Json.Decode as Json exposing ((:=))
--- import Json.Encode
 import Task exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -11,6 +10,8 @@ import Time exposing (Time, second)
 import Chartjs exposing (..)
 import Chartjs.Line exposing (..)
 import Color exposing (..)
+import Date
+import Date.Format
 
 -- Model
 type alias TemperatureReading =
@@ -35,7 +36,7 @@ temperatureReadingToJsonString temperatureReading =
     comma =
       ", "
     readAtString =
-      "'readAt': '" ++temperatureReading.readAt++ "'"
+      "'readAt': '" ++(Date.Format.format "%k:%M:%S" (Date.fromString temperatureReading.readAt |> Result.withDefault (Date.fromTime 0)))++ "'"
     unitString =
       "'unit': '" ++temperatureReading.unit++ "'"
   in
@@ -116,21 +117,30 @@ signalPause =
 
 view: Signal.Address Action -> Model ->Html
 view address model =
-
   div[class "container"]
   [ entryForm address model
-    ,div[] [(drawChart (extractAllTimes model) (extractAllTemps model)), pauseButton address model]
-    ,saveButton address model
+    ,div[class "flex-cell graph"] [(drawChart (extractAllTimes model) (extractAllTemps model))]
+    ,div[class "flex-cell"][
+      div[class "btn-group"][saveButton address model, pauseButton address model]
+    ]
   ]
 
 extractAttributes : (a -> b) -> List a -> List b
 extractAttributes attributeFunction list =
   List.map attributeFunction list
 
+reformatDate : String -> String
+reformatDate dateString =
+  Date.Format.format "%k:%M:%S" (Date.fromString dateString |> Result.withDefault (Date.fromTime 0))
 
 extractAllTimes : Model -> List String
 extractAllTimes model =
-  extractAttributes .readAt model.temperatureReadings
+  let
+    listTimes=
+      extractAttributes .readAt model.temperatureReadings
+  in
+    List.map reformatDate listTimes
+
 
 
 extractAllTemps : Model -> List Float
@@ -158,26 +168,28 @@ entryForm address model =
       if model.mashNamed
       then span[][text "Mash name set!"]
       else
-        button[ class "setName", onClick address SetMashName] [text "Set Mash Name"]
+        button[ class "btn btn-primary btn-xs setName", onClick address SetMashName] [text "Set Mash Name"]
   in
-    div [] [
-      input [
-        type' "text",
-        placeholder "Enter Mash Name",
-        value model.mashName,
-        name "phrase",
-        autofocus True,
-        disabled model.mashNamed,
-        on "input" targetValue (\v -> Signal.message address (UpdateMashName v))
-      ][],
-      setMashNameButton
+    div [class "flex-cell flex-cell--single"] [
+      div[class "input-group"][input [
+          type' "text",
+          placeholder "Enter Mash Name",
+          value model.mashName,
+          name "phrase",
+          autofocus True,
+          disabled model.mashNamed,
+          on "input" targetValue (\v -> Signal.message address (UpdateMashName v))
+        ][],
+        setMashNameButton
+      ]
     ]
+
 
 saveButton: Signal.Address Action-> Model -> Html
 saveButton address model =
-  div [] [
-    button[ class "saveButton", onClick address PostReadings] [text "Save Data"]
-  ]
+  -- div [] [
+  button[ class "btn btn-primary saveButton", onClick address PostReadings] [text "Save Data"]
+  -- ]
 
 pauseButton: Signal.Address Action -> Model -> Html
 pauseButton address model =
@@ -188,9 +200,9 @@ pauseButton address model =
       else
         "Pause"
   in
-    div [] [
-      button[ class "pauseButton", onClick address TogglePause] [text label]
-    ]
+    -- div [] [
+    button[ class "btn btn-primary pauseButton", onClick address TogglePause] [text label]
+    -- ]
 
 --Wiring
 postReadings : Model -> Effects Action

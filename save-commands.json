@@ -1,0 +1,5 @@
+{
+  "commands" : [
+      "*.elm : /usr/local/bin/elm-make elm-tempchart.elm --output=build/{name}.js"
+  ]
+}

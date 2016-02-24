@@ -1,0 +1,10 @@
+{
+  "name": "elm-tempchart",
+  "version": "0.0.1",
+  "dependencies": {
+    "bootstrap-sass": "*",
+    "node-sass": "*"
+
+  },
+    "private": true
+}
