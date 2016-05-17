@@ -36,7 +36,7 @@ temperatureReadingToJsonString temperatureReading =
     comma =
       ", "
     readAtString =
-      "\"readAt\": \"" ++(Date.Format.format "%k:%M:%S" (Date.fromString temperatureReading.readAt |> Result.withDefault (Date.fromTime 0)))++ "\""
+      "\"readAt\": \""++(temperatureReading.readAt)++ "\""
     unitString =
       "\"unit\": \"" ++temperatureReading.unit++ "\""
   in
@@ -44,8 +44,8 @@ temperatureReadingToJsonString temperatureReading =
 
 init : (Model, Effects Action)
 init =
-  ((Model [] "" False False)
-  , getTempAction)
+  ((Model [] "" False True)
+    , Effects.none)
 
 
 --- Update
@@ -135,7 +135,7 @@ extractAttributes attributeFunction list =
 
 reformatDate : String -> String
 reformatDate dateString =
-  Date.Format.format "%k:%M:%S" (Date.fromString dateString |> Result.withDefault (Date.fromTime 0))
+  Date.Format.format "%H:%M:%S" (Date.fromString dateString |> Result.withDefault (Date.fromTime 0))
 
 extractAllTimes : Model -> List String
 extractAllTimes model =
@@ -286,7 +286,7 @@ pausedMailbox =
   let
     m = Signal.mailbox False
   in { m | signal =
-    Signal.foldp (always not) False m.signal }
+    Signal.foldp (always not) True m.signal }
 
 readingsMailbox : Signal.Mailbox (Maybe (List TemperatureReading))
 readingsMailbox = Signal.mailbox Nothing

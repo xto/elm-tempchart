@@ -28,7 +28,7 @@ Elm.Main.make = function (_elm) {
    var readingsMailbox = $Signal.mailbox($Maybe.Nothing);
    var pausedMailbox = function () {
       var m = $Signal.mailbox(false);
-      return _U.update(m,{signal: A3($Signal.foldp,$Basics.always($Basics.not),false,m.signal)});
+      return _U.update(m,{signal: A3($Signal.foldp,$Basics.always($Basics.not),true,m.signal)});
    }();
    var clock = $Time.every(2 * $Time.second);
    var drawChart = F2(function (horizontal_axis_data,vertical_axis_data) {
@@ -38,7 +38,7 @@ Elm.Main.make = function (_elm) {
       return A2($Html.div,_U.list([]),_U.list([$Html.fromElement(A4($Chartjs$Line.chart,800,600,data,$Chartjs$Line.defaultOptions))]));
    });
    var reformatDate = function (dateString) {
-      return A2($Date$Format.format,"%k:%M:%S",A2($Result.withDefault,$Date.fromTime(0),$Date.fromString(dateString)));
+      return A2($Date$Format.format,"%H:%M:%S",A2($Result.withDefault,$Date.fromTime(0),$Date.fromString(dateString)));
    };
    var extractAttributes = F2(function (attributeFunction,list) {    return A2($List.map,attributeFunction,list);});
    var extractAllTimes = function (model) {
@@ -104,9 +104,7 @@ Elm.Main.make = function (_elm) {
    var HandleHttpResponse = function (a) {    return {ctor: "HandleHttpResponse",_0: a};};
    var temperatureReadingToJsonString = function (temperatureReading) {
       var unitString = A2($Basics._op["++"],"\"unit\": \"",A2($Basics._op["++"],temperatureReading.unit,"\""));
-      var readAtString = A2($Basics._op["++"],
-      "\"readAt\": \"",
-      A2($Basics._op["++"],A2($Date$Format.format,"%k:%M:%S",A2($Result.withDefault,$Date.fromTime(0),$Date.fromString(temperatureReading.readAt))),"\""));
+      var readAtString = A2($Basics._op["++"],"\"readAt\": \"",A2($Basics._op["++"],temperatureReading.readAt,"\""));
       var comma = ", ";
       var temperatureString = A2($Basics._op["++"],"\"temperature\": \"",A2($Basics._op["++"],$Basics.toString(temperatureReading.temperature),"\""));
       return A2($Basics._op["++"],
@@ -116,6 +114,7 @@ Elm.Main.make = function (_elm) {
       A2($Basics._op["++"],comma,A2($Basics._op["++"],readAtString,A2($Basics._op["++"],comma,A2($Basics._op["++"],unitString,"}"))))));
    };
    var Model = F4(function (a,b,c,d) {    return {temperatureReadings: a,mashName: b,mashNamed: c,paused: d};});
+   var init = {ctor: "_Tuple2",_0: A4(Model,_U.list([]),"",false,true),_1: $Effects.none};
    var BasicHttpReponse = F2(function (a,b) {    return {status: a,body: b};});
    var basicApiResponseJsonDecoder = A3($Json$Decode.object2,
    BasicHttpReponse,
@@ -147,7 +146,6 @@ Elm.Main.make = function (_elm) {
    var getMashAction = function (mashName) {    return $Effects.task(A2($Task.map,LoadReadings,getMashFromApiTask(mashName)));};
    var getTempFromApiTask = $Task.toMaybe(A2($Http.get,temperatureReadingsJsonDecoder,A2($Http.url,"http://localhost:3000/temperatures",_U.list([]))));
    var getTempAction = $Effects.task(A2($Task.map,LoadReadings,getTempFromApiTask));
-   var init = {ctor: "_Tuple2",_0: A4(Model,_U.list([]),"",false,false),_1: getTempAction};
    var update = F2(function (action,model) {
       var _p0 = action;
       switch (_p0.ctor)
