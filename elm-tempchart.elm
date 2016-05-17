@@ -81,7 +81,7 @@ update action model =
                 ,Effects.none
             )
     LoadMash ->
-      (model
+      (Model [] model.mashName model.mashNamed model.paused
       , (getMashAction model.mashName))
 
     SetMashName ->

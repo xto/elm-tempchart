@@ -162,7 +162,7 @@ Elm.Main.make = function (_elm) {
                         ,_0: A4(Model,A2($List.append,model.temperatureReadings,eval_readings),model.mashName,model.mashNamed,model.paused)
                         ,_1: $Effects.none};
               }
-         case "LoadMash": return {ctor: "_Tuple2",_0: model,_1: getMashAction(model.mashName)};
+         case "LoadMash": return {ctor: "_Tuple2",_0: A4(Model,_U.list([]),model.mashName,model.mashNamed,model.paused),_1: getMashAction(model.mashName)};
          case "SetMashName": return !_U.eq(model.mashName,"") ? {ctor: "_Tuple2"
                                                                 ,_0: A4(Model,model.temperatureReadings,model.mashName,true,model.paused)
                                                                 ,_1: $Effects.none} : {ctor: "_Tuple2",_0: model,_1: $Effects.none};
