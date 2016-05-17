@@ -32,13 +32,13 @@ temperatureReadingToJsonString: TemperatureReading -> String
 temperatureReadingToJsonString temperatureReading =
   let
     temperatureString =
-      "'temperature': '" ++ (toString temperatureReading.temperature) ++ "'"
+      "\"temperature\": \"" ++ (toString temperatureReading.temperature) ++ "\""
     comma =
       ", "
     readAtString =
-      "'readAt': '" ++(Date.Format.format "%k:%M:%S" (Date.fromString temperatureReading.readAt |> Result.withDefault (Date.fromTime 0)))++ "'"
+      "\"readAt\": \"" ++(Date.Format.format "%k:%M:%S" (Date.fromString temperatureReading.readAt |> Result.withDefault (Date.fromTime 0)))++ "\""
     unitString =
-      "'unit': '" ++temperatureReading.unit++ "'"
+      "\"unit\": \"" ++temperatureReading.unit++ "\""
   in
     "{"++ temperatureString ++ comma ++ readAtString ++ comma ++ unitString ++"}"
 
@@ -53,6 +53,7 @@ init =
 type Action
   = HandleHttpResponse (Maybe BasicHttpReponse)
   | LoadReadings (Maybe (List TemperatureReading))
+  | LoadMash
   | NoOp (Maybe ())
   | PostReadings
   | RequestReadings
@@ -65,7 +66,7 @@ update action model =
   case action of
     RequestReadings ->
       (model
-      , getTempAction)
+      , getTempAction )
 
     LoadReadings newTemperatureReadings->
       let
@@ -79,6 +80,9 @@ update action model =
             ( Model (List.append model.temperatureReadings eval_readings) model.mashName model.mashNamed model.paused
                 ,Effects.none
             )
+    LoadMash ->
+      (model
+      , (getMashAction model.mashName))
 
     SetMashName ->
       if model.mashName /= "" then
@@ -121,7 +125,7 @@ view address model =
   [ entryForm address model
     ,div[class "flex-cell graph"] [(drawChart (extractAllTimes model) (extractAllTemps model))]
     ,div[class "flex-cell"][
-      div[class "btn-group"][saveButton address model, pauseButton address model]
+      div[class "btn-group"][saveButton address model, pauseButton address model, loadButton address model]
     ]
   ]
 
@@ -187,9 +191,11 @@ entryForm address model =
 
 saveButton: Signal.Address Action-> Model -> Html
 saveButton address model =
-  -- div [] [
   button[ class "btn btn-primary saveButton", onClick address PostReadings] [text "Save Data"]
-  -- ]
+
+loadButton : Signal.Address Action -> Model -> Html
+loadButton address model =
+  button[ class "btn btn-primary loadButton", onClick address LoadMash] [text "Load Mash Data"]
 
 pauseButton: Signal.Address Action -> Model -> Html
 pauseButton address model =
@@ -225,6 +231,16 @@ getTempAction =
     |> Task.map LoadReadings
     |> Effects.task
 
+getMashAction : String -> Effects Action
+getMashAction mashName =
+  getMashFromApiTask mashName
+  |> Task.map LoadReadings
+  |> Effects.task
+
+getMashFromApiTask : String -> Task a (Maybe (List TemperatureReading))
+getMashFromApiTask mashName =
+  Http.get temperatureReadingsJsonDecoder (Http.url ("http://localhost:3000/mashes/" ++ mashName) [] )
+  |> Task.toMaybe
 
 getTempFromApiTask :Task a (Maybe (List TemperatureReading))
 getTempFromApiTask  =

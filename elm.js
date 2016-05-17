@@ -15200,17 +15200,13 @@ Elm.Main.make = function (_elm) {
    var view = F2(function (address,model) {
       return A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
-      _U.list([A2($Html.div,
-      _U.list([$Html$Attributes.$class("row")]),
-      _U.list([A2($Html.div,
-      _U.list([$Html$Attributes.$class("col-sm")]),
       _U.list([A2(entryForm,address,model)
               ,A2($Html.div,_U.list([$Html$Attributes.$class("flex-cell graph")]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model))]))
               ,A2($Html.div,
               _U.list([$Html$Attributes.$class("flex-cell")]),
               _U.list([A2($Html.div,
               _U.list([$Html$Attributes.$class("btn-group")]),
-              _U.list([A2(saveButton,address,model),A2(pauseButton,address,model)]))]))]))]))]));
+              _U.list([A2(saveButton,address,model),A2(pauseButton,address,model)]))]))]));
    });
    var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
    var signalPause = $Effects.task(A2($Task.map,NoOp,$Task.toMaybe(A2($Signal.send,pausedMailbox.address,true))));
