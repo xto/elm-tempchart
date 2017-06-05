@@ -1,229 +1,383 @@
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {
-   "use strict";
-   _elm.Main = _elm.Main || {};
-   if (_elm.Main.values) return _elm.Main.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Chartjs = Elm.Chartjs.make(_elm),
-   $Chartjs$Line = Elm.Chartjs.Line.make(_elm),
-   $Color = Elm.Color.make(_elm),
-   $Date = Elm.Date.make(_elm),
-   $Date$Format = Elm.Date.Format.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $Effects = Elm.Effects.make(_elm),
-   $Html = Elm.Html.make(_elm),
-   $Html$Attributes = Elm.Html.Attributes.make(_elm),
-   $Html$Events = Elm.Html.Events.make(_elm),
-   $Http = Elm.Http.make(_elm),
-   $Json$Decode = Elm.Json.Decode.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm),
-   $StartApp = Elm.StartApp.make(_elm),
-   $Task = Elm.Task.make(_elm),
-   $Time = Elm.Time.make(_elm);
-   var _op = {};
-   var readingsMailbox = $Signal.mailbox($Maybe.Nothing);
-   var pausedMailbox = function () {
-      var m = $Signal.mailbox(false);
-      return _U.update(m,{signal: A3($Signal.foldp,$Basics.always($Basics.not),true,m.signal)});
-   }();
-   var clock = $Time.every(2 * $Time.second);
-   var drawChart = F2(function (horizontal_axis_data,vertical_axis_data) {
-      var data = {ctor: "_Tuple2"
-                 ,_0: horizontal_axis_data
-                 ,_1: _U.list([{ctor: "_Tuple3",_0: "Time",_1: $Chartjs$Line.defStyle(A3($Color.rgba,220,220,220)),_2: vertical_axis_data}])};
-      return A2($Html.div,_U.list([]),_U.list([$Html.fromElement(A4($Chartjs$Line.chart,800,600,data,$Chartjs$Line.defaultOptions))]));
-   });
-   var reformatDate = function (dateString) {
-      return A2($Date$Format.format,"%H:%M:%S",A2($Result.withDefault,$Date.fromTime(0),$Date.fromString(dateString)));
-   };
-   var extractAttributes = F2(function (attributeFunction,list) {    return A2($List.map,attributeFunction,list);});
-   var extractAllTimes = function (model) {
-      var listTimes = A2(extractAttributes,function (_) {    return _.readAt;},model.temperatureReadings);
-      return A2($List.map,reformatDate,listTimes);
-   };
-   var extractAllTemps = function (model) {    return A2(extractAttributes,function (_) {    return _.temperature;},model.temperatureReadings);};
-   var TogglePause = {ctor: "TogglePause"};
-   var pauseButton = F2(function (address,model) {
-      var label = model.paused ? "Resume" : "Pause";
-      return A2($Html.button,
-      _U.list([$Html$Attributes.$class("btn btn-primary pauseButton"),A2($Html$Events.onClick,address,TogglePause)]),
-      _U.list([$Html.text(label)]));
-   });
-   var UpdateMashName = function (a) {    return {ctor: "UpdateMashName",_0: a};};
-   var SetMashName = {ctor: "SetMashName"};
-   var entryForm = F2(function (address,model) {
-      var setMashNameButton = model.mashNamed ? A2($Html.span,_U.list([]),_U.list([$Html.text("Mash name set!")])) : A2($Html.button,
-      _U.list([$Html$Attributes.$class("btn btn-primary btn-xs setName"),A2($Html$Events.onClick,address,SetMashName)]),
-      _U.list([$Html.text("Set Mash Name")]));
-      return A2($Html.div,
-      _U.list([$Html$Attributes.$class("flex-cell flex-cell--single")]),
-      _U.list([A2($Html.div,
-      _U.list([$Html$Attributes.$class("input-group")]),
-      _U.list([A2($Html.input,
-              _U.list([$Html$Attributes.type$("text")
-                      ,$Html$Attributes.placeholder("Enter Mash Name")
-                      ,$Html$Attributes.value(model.mashName)
-                      ,$Html$Attributes.name("phrase")
-                      ,$Html$Attributes.autofocus(true)
-                      ,$Html$Attributes.disabled(model.mashNamed)
-                      ,A3($Html$Events.on,"input",$Html$Events.targetValue,function (v) {    return A2($Signal.message,address,UpdateMashName(v));})]),
-              _U.list([]))
-              ,setMashNameButton]))]));
-   });
-   var RequestReadings = {ctor: "RequestReadings"};
-   var PostReadings = {ctor: "PostReadings"};
-   var saveButton = F2(function (address,model) {
-      return A2($Html.button,
-      _U.list([$Html$Attributes.$class("btn btn-primary saveButton"),A2($Html$Events.onClick,address,PostReadings)]),
-      _U.list([$Html.text("Save Data")]));
-   });
-   var NoOp = function (a) {    return {ctor: "NoOp",_0: a};};
-   var signalPause = $Effects.task(A2($Task.map,NoOp,$Task.toMaybe(A2($Signal.send,pausedMailbox.address,true))));
-   var LoadMash = {ctor: "LoadMash"};
-   var loadButton = F2(function (address,model) {
-      return A2($Html.button,
-      _U.list([$Html$Attributes.$class("btn btn-primary loadButton"),A2($Html$Events.onClick,address,LoadMash)]),
-      _U.list([$Html.text("Load Mash Data")]));
-   });
-   var view = F2(function (address,model) {
-      return A2($Html.div,
-      _U.list([$Html$Attributes.$class("container")]),
-      _U.list([A2(entryForm,address,model)
-              ,A2($Html.div,_U.list([$Html$Attributes.$class("flex-cell graph")]),_U.list([A2(drawChart,extractAllTimes(model),extractAllTemps(model))]))
-              ,A2($Html.div,
-              _U.list([$Html$Attributes.$class("flex-cell")]),
-              _U.list([A2($Html.div,
-              _U.list([$Html$Attributes.$class("btn-group")]),
-              _U.list([A2(saveButton,address,model),A2(pauseButton,address,model),A2(loadButton,address,model)]))]))]));
-   });
-   var LoadReadings = function (a) {    return {ctor: "LoadReadings",_0: a};};
-   var HandleHttpResponse = function (a) {    return {ctor: "HandleHttpResponse",_0: a};};
-   var temperatureReadingToJsonString = function (temperatureReading) {
-      var unitString = A2($Basics._op["++"],"\"unit\": \"",A2($Basics._op["++"],temperatureReading.unit,"\""));
-      var readAtString = A2($Basics._op["++"],"\"readAt\": \"",A2($Basics._op["++"],temperatureReading.readAt,"\""));
-      var comma = ", ";
-      var temperatureString = A2($Basics._op["++"],"\"temperature\": \"",A2($Basics._op["++"],$Basics.toString(temperatureReading.temperature),"\""));
-      return A2($Basics._op["++"],
-      "{",
-      A2($Basics._op["++"],
-      temperatureString,
-      A2($Basics._op["++"],comma,A2($Basics._op["++"],readAtString,A2($Basics._op["++"],comma,A2($Basics._op["++"],unitString,"}"))))));
-   };
-   var Model = F4(function (a,b,c,d) {    return {temperatureReadings: a,mashName: b,mashNamed: c,paused: d};});
-   var init = {ctor: "_Tuple2",_0: A4(Model,_U.list([]),"",false,true),_1: $Effects.none};
-   var BasicHttpReponse = F2(function (a,b) {    return {status: a,body: b};});
-   var basicApiResponseJsonDecoder = A3($Json$Decode.object2,
-   BasicHttpReponse,
-   A2($Json$Decode._op[":="],"status",$Json$Decode.$int),
-   A2($Json$Decode._op[":="],"body",$Json$Decode.string));
-   var postReadings = function (model) {
-      var postData = $Http.multipart(_U.list([A2($Http.stringData,"mash_name",model.mashName)
-                                             ,A2($Http.stringData,
-                                             "temperatures",
-                                             $Basics.toString(A2($List.map,temperatureReadingToJsonString,model.temperatureReadings)))]));
-      return $Effects.task(A2($Task.map,
-      HandleHttpResponse,
-      $Task.toMaybe(A3($Http.post,basicApiResponseJsonDecoder,A2($Http.url,"http://localhost:3000/temperatures",_U.list([])),postData))));
-   };
-   var TemperatureReading = F3(function (a,b,c) {    return {temperature: a,readAt: b,unit: c};});
-   var temperatureReadingsJsonDecoder = function () {
-      var tempobj = A4($Json$Decode.object3,
-      TemperatureReading,
-      A2($Json$Decode._op[":="],"temperature",$Json$Decode.$float),
-      A2($Json$Decode._op[":="],"readAt",$Json$Decode.string),
-      A2($Json$Decode._op[":="],"unit",$Json$Decode.string));
-      return A2($Json$Decode._op[":="],"temperatures",$Json$Decode.list(tempobj));
-   }();
-   var getMashFromApiTask = function (mashName) {
-      return $Task.toMaybe(A2($Http.get,
-      temperatureReadingsJsonDecoder,
-      A2($Http.url,A2($Basics._op["++"],"http://localhost:3000/mashes/",mashName),_U.list([]))));
-   };
-   var getMashAction = function (mashName) {    return $Effects.task(A2($Task.map,LoadReadings,getMashFromApiTask(mashName)));};
-   var getTempFromApiTask = $Task.toMaybe(A2($Http.get,temperatureReadingsJsonDecoder,A2($Http.url,"http://localhost:3000/temperatures",_U.list([]))));
-   var getTempAction = $Effects.task(A2($Task.map,LoadReadings,getTempFromApiTask));
-   var update = F2(function (action,model) {
-      var _p0 = action;
-      switch (_p0.ctor)
-      {case "RequestReadings": return {ctor: "_Tuple2",_0: model,_1: getTempAction};
-         case "LoadReadings": var _p2 = _p0._0;
-           var eval_readings = A2($Maybe.withDefault,_U.list([]),_p2);
-           var _p1 = _p2;
-           if (_p1.ctor === "Nothing") {
-                 return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-              } else {
-                 return {ctor: "_Tuple2"
-                        ,_0: A4(Model,A2($List.append,model.temperatureReadings,eval_readings),model.mashName,model.mashNamed,model.paused)
-                        ,_1: $Effects.none};
-              }
-         case "LoadMash": return {ctor: "_Tuple2",_0: A4(Model,_U.list([]),model.mashName,model.mashNamed,model.paused),_1: getMashAction(model.mashName)};
-         case "SetMashName": return !_U.eq(model.mashName,"") ? {ctor: "_Tuple2"
-                                                                ,_0: A4(Model,model.temperatureReadings,model.mashName,true,model.paused)
-                                                                ,_1: $Effects.none} : {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-         case "UpdateMashName": return {ctor: "_Tuple2",_0: A4(Model,model.temperatureReadings,_p0._0,model.mashNamed,model.paused),_1: $Effects.none};
-         case "PostReadings": return {ctor: "_Tuple2",_0: model,_1: postReadings(model)};
-         case "HandleHttpResponse": var _p3 = _p0._0;
-           if (_p3.ctor === "Nothing") {
-                 return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-              } else {
-                 return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-              }
-         case "NoOp": return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-         default: return {ctor: "_Tuple2",_0: A4(Model,model.temperatureReadings,model.mashName,model.mashNamed,$Basics.not(model.paused)),_1: signalPause};}
-   });
-   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([A2($Signal.map,LoadReadings,readingsMailbox.signal)])});
-   var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
-   var main = app.html;
-   var getTempTask = F2(function (paused,time) {
-      return paused ? $Task.succeed({ctor: "_Tuple0"}) : A2($Task.andThen,
-      getTempFromApiTask,
-      function (maybeTempReadings) {
-         return A2($Signal.send,readingsMailbox.address,maybeTempReadings);
-      });
-   });
-   var periodicGet = Elm.Native.Task.make(_elm).performSignal("periodicGet",A3($Signal.map2,getTempTask,pausedMailbox.signal,clock));
-   return _elm.Main.values = {_op: _op
-                             ,TemperatureReading: TemperatureReading
-                             ,BasicHttpReponse: BasicHttpReponse
-                             ,Model: Model
-                             ,temperatureReadingToJsonString: temperatureReadingToJsonString
-                             ,init: init
-                             ,HandleHttpResponse: HandleHttpResponse
-                             ,LoadReadings: LoadReadings
-                             ,LoadMash: LoadMash
-                             ,NoOp: NoOp
-                             ,PostReadings: PostReadings
-                             ,RequestReadings: RequestReadings
-                             ,SetMashName: SetMashName
-                             ,UpdateMashName: UpdateMashName
-                             ,TogglePause: TogglePause
-                             ,update: update
-                             ,signalPause: signalPause
-                             ,view: view
-                             ,extractAttributes: extractAttributes
-                             ,reformatDate: reformatDate
-                             ,extractAllTimes: extractAllTimes
-                             ,extractAllTemps: extractAllTemps
-                             ,drawChart: drawChart
-                             ,entryForm: entryForm
-                             ,saveButton: saveButton
-                             ,loadButton: loadButton
-                             ,pauseButton: pauseButton
-                             ,postReadings: postReadings
-                             ,getTempAction: getTempAction
-                             ,getMashAction: getMashAction
-                             ,getMashFromApiTask: getMashFromApiTask
-                             ,getTempFromApiTask: getTempFromApiTask
-                             ,basicApiResponseJsonDecoder: basicApiResponseJsonDecoder
-                             ,temperatureReadingsJsonDecoder: temperatureReadingsJsonDecoder
-                             ,clock: clock
-                             ,getTempTask: getTempTask
-                             ,pausedMailbox: pausedMailbox
-                             ,readingsMailbox: readingsMailbox
-                             ,app: app
-                             ,main: main};
-};
+       "use strict";
+       _elm.Main = _elm.Main || {};
+       if (_elm.Main.values)    return _elm.Main.values;
+       var _U = Elm.Native.Utils.make(_elm),
+       $Basics = Elm.Basics.make(_elm),
+       $Chartjs = Elm.Chartjs.make(_elm),
+       $Chartjs$Line = Elm.Chartjs.Line.make(_elm),
+       $Color = Elm.Color.make(_elm),
+       $Date = Elm.Date.make(_elm),
+       $Date$Format = Elm.Date.Format.make(_elm),
+       $Debug = Elm.Debug.make(_elm),
+       $Effects = Elm.Effects.make(_elm),
+       $Html = Elm.Html.make(_elm),
+       $Html$Attributes = Elm.Html.Attributes.make(_elm),
+       $Html$Events = Elm.Html.Events.make(_elm),
+       $Http = Elm.Http.make(_elm),
+       $Json$Decode = Elm.Json.Decode.make(_elm),
+       $List = Elm.List.make(_elm),
+       $Maybe = Elm.Maybe.make(_elm),
+       $Result = Elm.Result.make(_elm),
+       $Signal = Elm.Signal.make(_elm),
+       $StartApp = Elm.StartApp.make(_elm),
+       $Task = Elm.Task.make(_elm),
+       $Time = Elm.Time.make(_elm);
+       var _op = {};
+       var readingsMailbox = $Signal.mailbox($Maybe.Nothing);
+       var pausedMailbox = function () {
+                              var m = $Signal.mailbox(false);
+                              return _U.update(m
+                                              ,{signal: A3($Signal.foldp
+                                                          ,$Basics.always($Basics.not)
+                                                          ,true
+                                                          ,m.signal)});
+                           }();
+       var clock = $Time.every(1 * $Time.minute);
+       var drawChart = F2(function (horizontal_axis_data
+                                   ,vertical_axis_data) {
+                          var data = {ctor: "_Tuple2"
+                                     ,_0: horizontal_axis_data
+                                     ,_1: _U.list([{ctor: "_Tuple3"
+                                                   ,_0: "Time"
+                                                   ,_1: $Chartjs$Line.defStyle(A3($Color.rgba,220,220,220))
+                                                   ,_2: vertical_axis_data}])};
+                          return A2($Html.div
+                                   ,_U.list([])
+                                   ,_U.list([$Html.fromElement(A4($Chartjs$Line.chart
+                                                                 ,800
+                                                                 ,600
+                                                                 ,data
+                                                                 ,$Chartjs$Line.defaultOptions))]));
+                       });
+       var reformatDate = function (dateString) {
+          return A2($Date$Format.format
+                   ,"%H:%M:%S"
+                   ,A2($Result.withDefault
+                      ,$Date.fromTime(0)
+                      ,$Date.fromString(dateString)));
+       };
+       var extractAttributes = F2(function (attributeFunction,list) {
+                                  return A2($List.map,attributeFunction,list);
+                               });
+       var extractAllTimes = function (model) {
+          var listTimes = A2(extractAttributes
+                            ,function (_) {
+                               return _.readAt;
+                            }
+                            ,model.temperatureReadings);
+          return A2($List.map,reformatDate,listTimes);
+       };
+       var extractAllTemps = function (model) {
+          return A2(extractAttributes
+                   ,function (_) {
+                      return _.temperature;
+                   }
+                   ,model.temperatureReadings);
+       };
+       var TogglePause = {ctor: "TogglePause"};
+       var pauseButton = F2(function (address,model) {
+                            var label = model.paused ? "Resume" : "Pause";
+                            return A2($Html.button
+                                     ,_U.list([$Html$Attributes.$class("btn btn-primary pauseButton")
+                                              ,A2($Html$Events.onClick,address,TogglePause)])
+                                     ,_U.list([$Html.text(label)]));
+                         });
+       var UpdateMashName = function (a) {
+          return {ctor: "UpdateMashName",_0: a};
+       };
+       var SetMashName = {ctor: "SetMashName"};
+       var entryForm = F2(function (address,model) {
+                          var setMashNameButton = model.mashNamed ? A2($Html.span
+                                                                      ,_U.list([])
+                                                                      ,_U.list([$Html.text("Mash name set!")])) : A2($Html.button
+                                                                                                                    ,_U.list([$Html$Attributes.$class("btn btn-primary btn-xs setName")
+                                                                                                                             ,A2($Html$Events.onClick
+                                                                                                                                ,address
+                                                                                                                                ,SetMashName)])
+                                                                                                                    ,_U.list([$Html.text("Set Mash Name")]));
+                          return A2($Html.div
+                                   ,_U.list([$Html$Attributes.$class("flex-cell flex-cell--single")])
+                                   ,_U.list([A2($Html.div
+                                               ,_U.list([$Html$Attributes.$class("input-group")])
+                                               ,_U.list([A2($Html.input
+                                                           ,_U.list([$Html$Attributes.type$("text")
+                                                                    ,$Html$Attributes.placeholder("Enter Mash Name")
+                                                                    ,$Html$Attributes.value(model.mashName)
+                                                                    ,$Html$Attributes.name("phrase")
+                                                                    ,$Html$Attributes.autofocus(true)
+                                                                    ,$Html$Attributes.disabled(model.mashNamed)
+                                                                    ,A3($Html$Events.on
+                                                                       ,"input"
+                                                                       ,$Html$Events.targetValue
+                                                                       ,function (v) {
+                                                                          return A2($Signal.message,address,UpdateMashName(v));
+                                                                       })])
+                                                           ,_U.list([]))
+                                                        ,setMashNameButton]))]));
+                       });
+       var RequestReadings = {ctor: "RequestReadings"};
+       var PostReadings = {ctor: "PostReadings"};
+       var saveButton = F2(function (address,model) {
+                           return A2($Html.button
+                                    ,_U.list([$Html$Attributes.$class("btn btn-primary saveButton")
+                                             ,A2($Html$Events.onClick,address,PostReadings)])
+                                    ,_U.list([$Html.text("Save Data")]));
+                        });
+       var NoOp = function (a) { return {ctor: "NoOp",_0: a};};
+       var signalPause = $Effects.task(A2($Task.map
+                                         ,NoOp
+                                         ,$Task.toMaybe(A2($Signal.send,pausedMailbox.address,true))));
+       var LoadMash = {ctor: "LoadMash"};
+       var loadButton = F2(function (address,model) {
+                           return A2($Html.button
+                                    ,_U.list([$Html$Attributes.$class("btn btn-primary loadButton")
+                                             ,A2($Html$Events.onClick,address,LoadMash)])
+                                    ,_U.list([$Html.text("Load Mash Data")]));
+                        });
+       var view = F2(function (address,model) {
+                     return A2($Html.div
+                              ,_U.list([$Html$Attributes.$class("container")])
+                              ,_U.list([A2(entryForm,address,model)
+                                       ,A2($Html.div
+                                          ,_U.list([$Html$Attributes.$class("flex-cell graph")])
+                                          ,_U.list([A2(drawChart
+                                                      ,extractAllTimes(model)
+                                                      ,extractAllTemps(model))]))
+                                       ,A2($Html.div
+                                          ,_U.list([$Html$Attributes.$class("flex-cell")])
+                                          ,_U.list([A2($Html.div
+                                                      ,_U.list([$Html$Attributes.$class("btn-group")])
+                                                      ,_U.list([A2(saveButton,address,model)
+                                                               ,A2(pauseButton,address,model)
+                                                               ,A2(loadButton,address,model)]))]))]));
+                  });
+       var LoadReadings = function (a) {
+          return {ctor: "LoadReadings",_0: a};
+       };
+       var HandleHttpResponse = function (a) {
+          return {ctor: "HandleHttpResponse",_0: a};
+       };
+       var temperatureReadingToJsonString =
+       function (temperatureReading) {
+          var unitString = A2($Basics._op["++"]
+                             ,"\"unit\": \""
+                             ,A2($Basics._op["++"],temperatureReading.unit,"\""));
+          var readAtString = A2($Basics._op["++"]
+                               ,"\"readAt\": \""
+                               ,A2($Basics._op["++"],temperatureReading.readAt,"\""));
+          var comma = ", ";
+          var temperatureString = A2($Basics._op["++"]
+                                    ,"\"temperature\": \""
+                                    ,A2($Basics._op["++"]
+                                       ,$Basics.toString(temperatureReading.temperature)
+                                       ,"\""));
+          return A2($Basics._op["++"]
+                   ,"{"
+                   ,A2($Basics._op["++"]
+                      ,temperatureString
+                      ,A2($Basics._op["++"]
+                         ,comma
+                         ,A2($Basics._op["++"]
+                            ,readAtString
+                            ,A2($Basics._op["++"]
+                               ,comma
+                               ,A2($Basics._op["++"],unitString,"}"))))));
+       };
+       var Model = F4(function (a,b,c,d) {
+                      return {temperatureReadings: a
+                             ,mashName: b
+                             ,mashNamed: c
+                             ,paused: d};
+                   });
+       var init = {ctor: "_Tuple2"
+                  ,_0: A4(Model,_U.list([]),"",false,true)
+                  ,_1: $Effects.none};
+       var BasicHttpReponse = F2(function (a,b) {
+                                 return {status: a,body: b};
+                              });
+       var basicApiResponseJsonDecoder = A3($Json$Decode.object2
+                                           ,BasicHttpReponse
+                                           ,A2($Json$Decode._op[":="],"status",$Json$Decode.$int)
+                                           ,A2($Json$Decode._op[":="],"body",$Json$Decode.string));
+       var postReadings = function (model) {
+          var postData = $Http.multipart(_U.list([A2($Http.stringData
+                                                    ,"mash_name"
+                                                    ,model.mashName)
+                                                 ,A2($Http.stringData
+                                                    ,"temperatures"
+                                                    ,$Basics.toString(A2($List.map
+                                                                        ,temperatureReadingToJsonString
+                                                                        ,model.temperatureReadings)))]));
+          return $Effects.task(A2($Task.map
+                                 ,HandleHttpResponse
+                                 ,$Task.toMaybe(A3($Http.post
+                                                  ,basicApiResponseJsonDecoder
+                                                  ,A2($Http.url,"http://localhost:3000/temperatures",_U.list([]))
+                                                  ,postData))));
+       };
+       var TemperatureReading = F3(function (a,b,c) {
+                                   return {temperature: a,readAt: b,unit: c};
+                                });
+       var temperatureReadingsJsonDecoder = function () {
+                                               var tempobj = A4($Json$Decode.object3
+                                                               ,TemperatureReading
+                                                               ,A2($Json$Decode._op[":="],"temperature",$Json$Decode.$float)
+                                                               ,A2($Json$Decode._op[":="],"readAt",$Json$Decode.string)
+                                                               ,A2($Json$Decode._op[":="],"unit",$Json$Decode.string));
+                                               return A2($Json$Decode._op[":="]
+                                                        ,"temperatures"
+                                                        ,$Json$Decode.list(tempobj));
+                                            }();
+       var getMashFromApiTask = function (mashName) {
+          return $Task.toMaybe(A2($Http.get
+                                 ,temperatureReadingsJsonDecoder
+                                 ,A2($Http.url
+                                    ,A2($Basics._op["++"],"http://localhost:3000/mashes/",mashName)
+                                    ,_U.list([]))));
+       };
+       var getMashAction = function (mashName) {
+          return $Effects.task(A2($Task.map
+                                 ,LoadReadings
+                                 ,getMashFromApiTask(mashName)));
+       };
+       var getTempFromApiTask = $Task.toMaybe(A2($Http.get
+                                                ,temperatureReadingsJsonDecoder
+                                                ,A2($Http.url
+                                                   ,"http://localhost:3000/temperatures"
+                                                   ,_U.list([]))));
+       var getTempAction = $Effects.task(A2($Task.map
+                                           ,LoadReadings
+                                           ,getTempFromApiTask));
+       var update = F2(function (action,model) {
+                       var _p0 = action;
+                       switch (_p0.ctor)
+                       {
+                         case "RequestReadings":
+                           return {ctor: "_Tuple2",_0: model,_1: getTempAction};
+                         case "LoadReadings":
+                           var _p2 = _p0._0;
+                           var eval_readings = A2($Maybe.withDefault,_U.list([]),_p2);
+                           var _p1 = _p2;
+                           if (_p1.ctor === "Nothing") {
+                              return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+                           } else {
+                              return {ctor: "_Tuple2"
+                                     ,_0: A4(Model
+                                            ,A2($List.append,model.temperatureReadings,eval_readings)
+                                            ,model.mashName
+                                            ,model.mashNamed
+                                            ,model.paused)
+                                     ,_1: $Effects.none};
+                           }
+                         case "LoadMash":
+                           return {ctor: "_Tuple2"
+                                  ,_0: A4(Model
+                                         ,_U.list([])
+                                         ,model.mashName
+                                         ,model.mashNamed
+                                         ,model.paused)
+                                  ,_1: getMashAction(model.mashName)};
+                         case "SetMashName":
+                           return !_U.eq(model.mashName,"") ? {ctor: "_Tuple2"
+                                                              ,_0: A4(Model
+                                                                     ,model.temperatureReadings
+                                                                     ,model.mashName
+                                                                     ,true
+                                                                     ,model.paused)
+                                                              ,_1: $Effects.none} : {ctor: "_Tuple2"
+                                                                                    ,_0: model
+                                                                                    ,_1: $Effects.none};
+                         case "UpdateMashName":
+                           return {ctor: "_Tuple2"
+                                  ,_0: A4(Model
+                                         ,model.temperatureReadings
+                                         ,_p0._0
+                                         ,model.mashNamed
+                                         ,model.paused)
+                                  ,_1: $Effects.none};
+                         case "PostReadings":
+                           return {ctor: "_Tuple2",_0: model,_1: postReadings(model)};
+                         case "HandleHttpResponse":
+                           var _p3 = _p0._0;
+                           if (_p3.ctor === "Nothing") {
+                              return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+                           } else {
+                              return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+                           }
+                         case "NoOp":
+                           return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+                         default:
+                           return {ctor: "_Tuple2"
+                                  ,_0: A4(Model
+                                         ,model.temperatureReadings
+                                         ,model.mashName
+                                         ,model.mashNamed
+                                         ,$Basics.not(model.paused))
+                                  ,_1: signalPause};
+                       }
+                    });
+       var app = $StartApp.start({init: init
+                                 ,update: update
+                                 ,view: view
+                                 ,inputs: _U.list([A2($Signal.map
+                                                     ,LoadReadings
+                                                     ,readingsMailbox.signal)])});
+       var tasks = Elm.Native.Task.make(_elm).performSignal("tasks"
+                                                           ,app.tasks);
+       var main = app.html;
+       var getTempTask = F2(function (paused,time) {
+                            return paused ? $Task.succeed({ctor: "_Tuple0"})
+                                : A2($Task.andThen
+                                    ,getTempFromApiTask
+                                    ,function (maybeTempReadings) {
+                                       return A2($Signal.send
+                                                ,readingsMailbox.address
+                                                ,maybeTempReadings);
+                                    });
+                         });
+       var periodicGet =
+       Elm.Native.Task.make(_elm).performSignal("periodicGet"
+                                               ,A3($Signal.map2,getTempTask,pausedMailbox.signal,clock));
+       return _elm.Main.values = {_op: _op
+                                 ,TemperatureReading: TemperatureReading
+                                 ,BasicHttpReponse: BasicHttpReponse
+                                 ,Model: Model
+                                 ,temperatureReadingToJsonString: temperatureReadingToJsonString
+                                 ,init: init
+                                 ,HandleHttpResponse: HandleHttpResponse
+                                 ,LoadReadings: LoadReadings
+                                 ,LoadMash: LoadMash
+                                 ,NoOp: NoOp
+                                 ,PostReadings: PostReadings
+                                 ,RequestReadings: RequestReadings
+                                 ,SetMashName: SetMashName
+                                 ,UpdateMashName: UpdateMashName
+                                 ,TogglePause: TogglePause
+                                 ,update: update
+                                 ,signalPause: signalPause
+                                 ,view: view
+                                 ,extractAttributes: extractAttributes
+                                 ,reformatDate: reformatDate
+                                 ,extractAllTimes: extractAllTimes
+                                 ,extractAllTemps: extractAllTemps
+                                 ,drawChart: drawChart
+                                 ,entryForm: entryForm
+                                 ,saveButton: saveButton
+                                 ,loadButton: loadButton
+                                 ,pauseButton: pauseButton
+                                 ,postReadings: postReadings
+                                 ,getTempAction: getTempAction
+                                 ,getMashAction: getMashAction
+                                 ,getMashFromApiTask: getMashFromApiTask
+                                 ,getTempFromApiTask: getTempFromApiTask
+                                 ,basicApiResponseJsonDecoder: basicApiResponseJsonDecoder
+                                 ,temperatureReadingsJsonDecoder: temperatureReadingsJsonDecoder
+                                 ,clock: clock
+                                 ,getTempTask: getTempTask
+                                 ,pausedMailbox: pausedMailbox
+                                 ,readingsMailbox: readingsMailbox
+                                 ,app: app
+                                 ,main: main};
+    };

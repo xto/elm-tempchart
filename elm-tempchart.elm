@@ -268,7 +268,7 @@ temperatureReadingsJsonDecoder =
 
 clock: Signal Time
 clock =
-  Time.every (2 * Time.second)
+  Time.every (1 * Time.minute)
 
 
 getTempTask : Bool -> Time -> Task () ()
